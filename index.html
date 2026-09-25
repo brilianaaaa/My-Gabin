@@ -43,7 +43,6 @@
   <!-- HEADER / NAVBAR & LOGO MODERN -->
   <header class="bg-brand-green text-white shadow-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-      <!-- LOGO KUSUS MY GABIN -->
       <a href="#" class="flex items-center gap-3">
         <div class="w-11 h-11 bg-amber-400 rounded-xl flex items-center justify-center text-brand-darkgreen font-black text-xl shadow-inner border-2 border-amber-200">
           MG
@@ -131,7 +130,7 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-2xl font-black text-brand-darkgreen">Menu Varian My Gabin</h2>
-          <p class="text-xs text-gray-500">Pilihan varian rasa asli & paket hemat hemat</p>
+          <p class="text-xs text-gray-500">Pilihan varian rasa asli & paket hemat</p>
         </div>
         <span class="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold">5 Varian + 2 Paket</span>
       </div>
@@ -223,15 +222,16 @@
           <input type="text" value="Delivery (Gratis Ongkir)" disabled class="w-full bg-gray-100 border border-gray-200 rounded-lg p-2.5 text-sm font-semibold text-gray-600">
         </div>
 
+        <!-- SHARE LOKASI MAPS (OPSIONAL / TIDAK WAJIB) -->
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Share Lokasi Maps (Google Maps URL) <span class="text-red-500">*</span></label>
-          <input type="url" id="custMaps" required placeholder="https://maps.app.goo.gl/..." class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-green focus:outline-none">
-          <p class="text-[10px] text-gray-500 mt-1">Tempel link titik lokasi rumah/kost Anda dari Google Maps.</p>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Share Lokasi Maps (Google Maps URL) <span class="text-gray-400 font-normal">(Opsional)</span></label>
+          <input type="url" id="custMaps" placeholder="https://maps.app.goo.gl/..." class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-green focus:outline-none">
+          <p class="text-[10px] text-gray-500 mt-1">Boleh diisi link titik Google Maps atau dikosongkan.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Catatan Tambahan</label>
-          <textarea id="custNotes" rows="2" placeholder="Contoh: Pagar warna hitam / titipkan di satpam" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-green focus:outline-none"></textarea>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Catatan Tambahan / Alamat Detail</label>
+          <textarea id="custNotes" rows="2" placeholder="Contoh: Rumah cat hijau dekat gang 2 / pagar warna hitam" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-green focus:outline-none"></textarea>
         </div>
 
         <div>
@@ -274,7 +274,7 @@
     </div>
   </div>
 
-  <!-- MODAL HALAMAN NOTIFIKASI PESANAN SUKSES DI TERIMA -->
+  <!-- MODAL NOTIFIKASI PESANAN BERHASIL -->
   <div id="successModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-gray-100">
       <div class="w-16 h-16 bg-emerald-100 text-brand-green rounded-full flex items-center justify-center text-3xl mx-auto">
@@ -512,12 +512,10 @@
           status: 'Menunggu Konfirmasi'
         };
 
-        // SIMPAN KE LOCALSTORAGE SEHINGGA OTOMATIS TERSINKRON KE SELLER
         const existingOrders = JSON.parse(localStorage.getItem('mygabin_orders') || '[]');
         existingOrders.unshift(orderData);
         localStorage.setItem('mygabin_orders', JSON.stringify(existingOrders));
 
-        // KURANGI STOK OTOMATIS
         const products = getProducts();
         cart.forEach(c => {
           const p = products.find(prod => prod.id === c.id);
@@ -525,13 +523,11 @@
         });
         localStorage.setItem('mygabin_products', JSON.stringify(products));
 
-        // RESET KERANJANG
         cart = [];
         updateCartUI();
         renderProducts();
         closeCheckoutModal();
 
-        // TAMPILKAN MODAL PESANAN DITERIMA
         document.getElementById('succId').innerText = orderData.id;
         document.getElementById('successModal').classList.remove('hidden');
       };
@@ -551,7 +547,6 @@
       document.getElementById('successModal').classList.add('hidden');
     }
 
-    // LISTENER INTEGRASI SYNC TAB
     window.addEventListener('storage', function(e) {
       if (e.key === 'mygabin_products') {
         renderProducts();
