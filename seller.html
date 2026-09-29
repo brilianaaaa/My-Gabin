@@ -98,32 +98,41 @@
       </div>
     </div>
 
-    <!-- FITUR KELOLA STOK & PRODUK -->
+    <!-- FITUR KELOLA STOK, HARGA & FOTO PRODUK -->
     <div class="bg-white rounded-2xl border shadow-sm p-6 space-y-6">
       <div class="flex justify-between items-center border-b pb-4">
         <div>
           <h2 class="font-black text-lg text-brand-darkgreen flex items-center gap-2">
-            <i class="fa-solid fa-boxes-stacked text-amber-500"></i> Kelola Stok & Varian Produk
+            <i class="fa-solid fa-boxes-stacked text-amber-500"></i> Kelola Varian, Stok & Foto Produk
           </h2>
-          <p class="text-xs text-gray-500">Atur jumlah stok, harga, dan varian yang tampil di menu pembeli secara instan.</p>
+          <p class="text-xs text-gray-500">Atur jumlah stok, harga, nama, serta link URL foto produk secara instan.</p>
         </div>
       </div>
 
-      <!-- FORM TAMBAH/EDIT PRODUK -->
-      <form onsubmit="handleSaveProduct(event)" class="bg-gray-50 p-4 rounded-xl border grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+      <!-- FORM TAMBAH/EDIT PRODUK TERMASUK FOTO -->
+      <form onsubmit="handleSaveProduct(event)" class="bg-gray-50 p-4 rounded-xl border grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
         <input type="hidden" id="prodId">
+        
         <div class="md:col-span-2">
           <label class="block text-[11px] font-bold text-gray-600 mb-1">Nama Produk/Varian</label>
           <input type="text" id="prodName" required placeholder="Contoh: Gabin Coklat Keju" class="w-full p-2 border rounded-lg text-xs">
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-gray-600 mb-1">Harga (Rp)</label>
           <input type="number" id="prodPrice" required placeholder="12000" class="w-full p-2 border rounded-lg text-xs">
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-gray-600 mb-1">Jumlah Stok</label>
           <input type="number" id="prodStock" required placeholder="20" class="w-full p-2 border rounded-lg text-xs">
         </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-gray-600 mb-1">URL Link Foto Produk</label>
+          <input type="url" id="prodImg" placeholder="https://..." class="w-full p-2 border rounded-lg text-xs">
+        </div>
+
         <div>
           <button type="submit" id="btnSaveProd" class="w-full bg-brand-green hover:bg-brand-darkgreen text-white font-bold p-2 rounded-lg text-xs shadow transition">
             <i class="fa-solid fa-plus mr-1"></i> Simpan Produk
@@ -136,11 +145,11 @@
         <table class="w-full text-left text-xs">
           <thead>
             <tr class="bg-gray-100 border-b text-gray-600 font-bold uppercase">
-              <th class="p-3">Gambar</th>
+              <th class="p-3">Foto</th>
               <th class="p-3">Nama Produk</th>
               <th class="p-3">Harga</th>
               <th class="p-3">Stok Saat Ini</th>
-              <th class="p-3 text-center">Aksi / Edit Stok</th>
+              <th class="p-3 text-center">Aksi / Edit Produk</th>
             </tr>
           </thead>
           <tbody id="productsTable" class="divide-y">
@@ -169,7 +178,6 @@
     let audioEnabled = false;
     let isInitialOrderLoad = true;
 
-    // Permintaan izin notifikasi browser
     if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
@@ -217,7 +225,6 @@
         tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400 font-medium">Belum ada pesanan masuk saat ini.</td></tr>';
       }
 
-      // Deteksi pesanan baru untuk pembunyian notifikasi
       snapshot.docChanges().forEach(change => {
         if (change.type === 'added' && !isInitialOrderLoad) {
           const newOrder = change.doc.data();
@@ -257,8 +264,8 @@
               </select>
             </td>
             <td class="p-3 text-center">
-              <button onclick="deleteOrder('${docId}') text-red-500" class="text-red-500 hover:text-red-700 p-1" title="Hapus Pesanan">
-                <i class="fa-solid fa-trash" onclick="deleteOrder('${docId}')"></i>
+              <button onclick="deleteOrder('${docId}')" class="text-red-500 hover:text-red-700 p-1" title="Hapus Pesanan">
+                <i class="fa-solid fa-trash"></i>
               </button>
             </td>
           </tr>
@@ -279,7 +286,7 @@
       }
     }
 
-    // --- 2. KELOLA DATA PRODUK & EDIT STOK ---
+    // --- 2. KELOLA DATA PRODUK, STOK & FOTO ---
     db.collection('products').onSnapshot(snapshot => {
       const tbody = document.getElementById('productsTable');
       tbody.innerHTML = '';
@@ -291,16 +298,18 @@
       snapshot.forEach(doc => {
         const p = doc.data();
         const pId = doc.id;
+        const defaultImg = 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=100&q=80';
+        const imgUrl = p.img || defaultImg;
 
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
-            <td class="p-3"><img src="${p.img || 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=100&q=80'}" class="w-10 h-10 object-cover rounded-lg border"></td>
+            <td class="p-3"><img src="${imgUrl}" class="w-12 h-12 object-cover rounded-lg border shadow-sm"></td>
             <td class="p-3 font-bold text-gray-800">${p.name}</td>
             <td class="p-3 font-semibold text-brand-darkgreen">Rp ${(p.price || 0).toLocaleString('id-ID')}</td>
             <td class="p-3 font-black text-gray-700">${p.stock} porsi</td>
-            <td class="p-3 text-center space-x-2">
+            <td class="p-3 text-center space-x-1.5">
               <button onclick="quickUpdateStock('${pId}', ${p.stock + 5})" class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded text-[10px] hover:bg-emerald-200">+5 Stok</button>
-              <button onclick="editProduct('${pId}', '${p.name}', ${p.price}, ${p.stock})" class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded text-[10px] hover:bg-amber-200">Edit</button>
+              <button onclick="editProduct('${pId}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, ${p.stock}, '${imgUrl.replace(/'/g, "\\'")}')" class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded text-[10px] hover:bg-amber-200">Edit</button>
               <button onclick="deleteProduct('${pId}')" class="bg-red-100 text-red-800 font-bold px-2 py-1 rounded text-[10px] hover:bg-red-200">Hapus</button>
             </td>
           </tr>
@@ -314,16 +323,16 @@
       const name = document.getElementById('prodName').value;
       const price = parseInt(document.getElementById('prodPrice').value);
       const stock = parseInt(document.getElementById('prodStock').value);
+      let img = document.getElementById('prodImg').value.trim();
 
-      const data = {
-        name: name,
-        price: price,
-        stock: stock,
-        img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=500&q=80'
-      };
+      if (!img) {
+        img = 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=500&q=80';
+      }
+
+      const data = { name, price, stock, img };
 
       if (id) {
-        await db.collection('products').doc(id).update({ name, price, stock });
+        await db.collection('products').doc(id).update(data);
       } else {
         await db.collection('products').add(data);
       }
@@ -332,14 +341,16 @@
       document.getElementById('prodName').value = '';
       document.getElementById('prodPrice').value = '';
       document.getElementById('prodStock').value = '';
+      document.getElementById('prodImg').value = '';
       document.getElementById('btnSaveProd').innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Simpan Produk';
     }
 
-    function editProduct(id, name, price, stock) {
+    function editProduct(id, name, price, stock, img) {
       document.getElementById('prodId').value = id;
       document.getElementById('prodName').value = name;
       document.getElementById('prodPrice').value = price;
       document.getElementById('prodStock').value = stock;
+      document.getElementById('prodImg').value = img || '';
       document.getElementById('btnSaveProd').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Update Produk';
     }
 
