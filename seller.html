@@ -11,6 +11,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
+  <!-- HTML2Canvas Library untuk Mengubah Struk Nota ke Gambar -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -45,11 +48,9 @@
       </div>
       
       <div class="flex items-center gap-2">
-        <!-- TEST SOUND BUTTON -->
         <button onclick="playNotificationSound()" title="Uji Suara Notifikasi" class="bg-emerald-800 hover:bg-emerald-700 text-amber-300 text-xs font-bold px-3 py-2 rounded-xl border border-emerald-600 transition flex items-center gap-1.5">
           <i class="fa-solid fa-volume-high"></i> Tes Suara
         </button>
-        <!-- TOMBOL BERALIH KE PEMBELI -->
         <a href="index.html" class="bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
           <i class="fa-solid fa-store"></i> Lihat Toko (Tampilan Pembeli)
         </a>
@@ -85,7 +86,6 @@
         <button onclick="switchTab('products')" id="tabBtnProducts" class="py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green">Kelola Produk & Stok</button>
       </div>
 
-      <!-- EKSPOR DATA & INTEGRASI -->
       <div class="hidden md:flex items-center gap-2">
         <button onclick="exportOrdersToCSV()" class="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow">
           <i class="fa-solid fa-file-excel"></i> Ekspor CSV Terpisah Kolom
@@ -106,6 +106,7 @@
           <select id="orderStatusFilter" onchange="renderOrdersUI()" class="border rounded-xl px-3 py-1.5 text-xs font-semibold bg-gray-50">
             <option value="ALL">Semua Status</option>
             <option value="Menunggu Konfirmasi">Menunggu Konfirmasi</option>
+            <option value="Di Proses">Di Proses</option>
             <option value="Selesai">Selesai</option>
             <option value="Dibatalkan">Dibatalkan</option>
           </select>
@@ -121,7 +122,7 @@
               <th class="p-3">Detail Pesanan</th>
               <th class="p-3">Total & Pembayaran</th>
               <th class="p-3">Status</th>
-              <th class="p-3 text-center">Aksi</th>
+              <th class="p-3 text-center">Aksi & Struk Gambar</th>
             </tr>
           </thead>
           <tbody id="ordersTableBody" class="divide-y"></tbody>
@@ -141,6 +142,15 @@
     </section>
   </main>
 
+  <!-- ELEMEN TERSEMBUNYI UNTUK RENDERING NOTA MENJADI GAMBAR DI PORTAL PENJUAL -->
+  <div id="hiddenReceiptContainer" class="fixed -left-[9999px] top-0 bg-white p-6 border rounded-xl w-[350px] font-mono text-xs space-y-2 border-dashed border-amber-400">
+    <div class="text-center font-bold text-brand-darkgreen border-b border-amber-300 pb-2">
+      🍦 MY GABIN BANGKALAN 🍦<br>
+      <span class="text-[10px] font-normal text-gray-500">Nota Resmi Penjual</span>
+    </div>
+    <div id="hiddenReceiptContent"></div>
+  </div>
+
   <!-- MODAL DETAIL BUKTI BAYAR -->
   <div id="proofModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div class="bg-white rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl">
@@ -152,7 +162,7 @@
     </div>
   </div>
 
-  <!-- MODAL CETAK NOTA DARI DASHBOARD PENJUAL -->
+  <!-- MODAL CETAK NOTA -->
   <div id="printReceiptModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b pb-2">
@@ -244,7 +254,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // OPTIONAL GOOGLE SHEETS WEBHOOK URL
     const GOOGLE_SHEETS_WEBHOOK_URL = ''; 
 
     let allOrders = [];
@@ -252,7 +261,6 @@
     let currentBase64Image = '';
     let initialLoad = true;
 
-    // Real-time listener Orders
     db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
       const isNewOrder = !initialLoad && snapshot.docChanges().some(change => change.type === 'added');
       if (isNewOrder) {
@@ -266,19 +274,15 @@
       initialLoad = false;
     });
 
-    // Real-time listener Products
     db.collection('products').onSnapshot(snapshot => {
       allProducts = [];
       snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
       renderSellerProductsUI();
     });
 
-    // FITUR NOTIFIKASI SUARA (Audio Chime)
     function playNotificationSound() {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Melodi Chime Dua Nada (E5 -> A5)
         const playTone = (freq, start, duration) => {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
@@ -292,8 +296,8 @@
           osc.stop(audioCtx.currentTime + start + duration);
         };
 
-        playTone(659.25, 0, 0.25);   // E5
-        playTone(880.00, 0.25, 0.4); // A5
+        playTone(659.25, 0, 0.25);   
+        playTone(880.00, 0.25, 0.4); 
       } catch (e) {
         console.log('Audio Autoplay terhalang oleh browser');
       }
@@ -330,7 +334,7 @@
 
       filtered.forEach(o => {
         const itemsList = o.items ? o.items.map(i => `${i.name} x${i.qty}`).join(', ') : '-';
-        const waLink = `https://wa.me/${o.custWA.replace(/^0/, '62')}?text=Halo%20${encodeURIComponent(o.custName)},%20mengenai%20pesanan%20My%20Gabin%20kode%20${o.id}%20...`;
+        const formattedWA = (o.custWA || '').replace(/^0/, '62');
 
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
@@ -340,7 +344,7 @@
             </td>
             <td class="p-3">
               <div class="font-bold">${o.custName}</div>
-              <a href="${waLink}" target="_blank" class="text-emerald-600 hover:underline text-xs"><i class="fa-brands fa-whatsapp"></i> ${o.custWA}</a>
+              <span class="text-emerald-700 font-bold text-xs"><i class="fa-brands fa-whatsapp"></i> ${o.custWA}</span>
               ${o.custMaps ? `<br><a href="${o.custMaps}" target="_blank" class="text-blue-500 underline text-[10px]"><i class="fa-solid fa-map-pin"></i> Maps</a>` : ''}
             </td>
             <td class="p-3">
@@ -355,38 +359,115 @@
             <td class="p-3">
               <span class="px-2 py-1 rounded-full text-[10px] font-bold ${
                 o.status === 'Selesai' ? 'bg-emerald-100 text-emerald-800' :
+                o.status === 'Di Proses' ? 'bg-blue-100 text-blue-800' :
                 o.status === 'Dibatalkan' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
               }">${o.status}</span>
             </td>
-            <td class="p-3 text-center space-x-1">
-              <button onclick="openPrintModal('${o.docId}')" title="Cetak Nota Kemasan" class="bg-amber-500 text-brand-darkgreen font-bold px-2 py-1 rounded text-xs hover:bg-amber-400"><i class="fa-solid fa-print"></i> Nota</button>
-              <button onclick="copyOrderDetails('${o.docId}')" title="Salin Ringkasan Pesanan" class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs hover:bg-gray-300"><i class="fa-solid fa-copy"></i></button>
-              <button onclick="updateOrderStatus('${o.docId}', 'Selesai')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs hover:bg-emerald-700">Selesai</button>
-              <button onclick="updateOrderStatus('${o.docId}', 'Dibatalkan')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">Batal</button>
+            <td class="p-3 text-center space-y-1">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="updateOrderStatusAndSendWA('${o.docId}', 'Di Proses')" title="Ubah ke Di Proses & Kirim Struk Gambar" class="bg-blue-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-blue-700">Proses</button>
+                <button onclick="updateOrderStatusAndSendWA('${o.docId}', 'Selesai')" title="Ubah ke Selesai & Kirim Struk Gambar" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-emerald-700">Selesai</button>
+                <button onclick="updateOrderStatus('${o.docId}', 'Dibatalkan')" title="Batalkan Pesanan" class="bg-red-500 text-white font-bold px-2 py-1 rounded text-xs hover:bg-red-600">Batal</button>
+              </div>
+              <div class="flex items-center justify-center gap-1 pt-1">
+                <button onclick="openPrintModal('${o.docId}')" class="bg-amber-500 text-brand-darkgreen font-bold px-2 py-1 rounded text-xs hover:bg-amber-400"><i class="fa-solid fa-print"></i> Print</button>
+                <button onclick="sendReceiptToCustomerWA('${o.docId}')" class="bg-emerald-700 text-white font-bold px-2 py-1 rounded text-xs hover:bg-emerald-800"><i class="fa-brands fa-whatsapp"></i> WA Struk</button>
+              </div>
             </td>
           </tr>
         `;
       });
     }
 
-    // FITUR EKSPOR EXCEL TERSTRUKTUR DENGAN MEMISAHKAN KOLOM
+    // FUNGSI UTAMA MENGUBAH STATUS AKSI DAN MENGIRIM STRUK GAMBAR VIA WA
+    async function updateOrderStatusAndSendWA(docId, newStatus) {
+      const order = allOrders.find(o => o.docId === docId);
+      if (!order) return;
+
+      // Update status di Firestore
+      await db.collection('orders').doc(docId).update({ status: newStatus });
+
+      // Persiapkan elemen nota tersembunyi untuk dikonversi menjadi gambar jika belum ada
+      let imgBase64 = order.receiptImg;
+
+      if (!imgBase64) {
+        let itemsStr = '';
+        if (order.items) {
+          order.items.forEach(i => {
+            itemsStr += `<div class="flex justify-between"><span>${i.name} x${i.qty}</span><span>Rp ${(i.price * i.qty).toLocaleString('id-ID')}</span></div>`;
+          });
+        }
+        document.getElementById('hiddenReceiptContent').innerHTML = `
+          <div><strong>ID:</strong> ${order.id || order.docId}</div>
+          <div><strong>Pemesan:</strong> ${order.custName}</div>
+          <div><strong>No WA:</strong> ${order.custWA}</div>
+          <div><strong>Metode:</strong> ${order.payMethod}</div>
+          <div class="border-t border-b border-gray-300 my-2 py-1 space-y-1">
+            ${itemsStr}
+          </div>
+          <div class="flex justify-between font-bold text-sm"><span>TOTAL:</span><span>Rp ${(order.totalPrice || 0).toLocaleString('id-ID')}</span></div>
+        `;
+
+        const hiddenElem = document.getElementById('hiddenReceiptContainer');
+        const canvas = await html2canvas(hiddenElem, { scale: 2 });
+        imgBase64 = canvas.toDataURL('image/png');
+        await db.collection('orders').doc(docId).update({ receiptImg: imgBase64 });
+      }
+
+      // Download Struk Gambar secara otomatis
+      if (imgBase64) {
+        const a = document.createElement('a');
+        a.href = imgBase64;
+        a.download = `Struk_${order.id || 'Nota'}_MyGabin.png`;
+        a.click();
+      }
+
+      // Tentukan format pesan WA sesuai dengan status
+      let message = '';
+      if (newStatus === 'Di Proses') {
+        message = "Halo Gabin lovers, pesanan dengan nota tertera sedang kami proses ya 😉✨";
+      } else if (newStatus === 'Selesai') {
+        message = "Halo Gabin lovers, pesanan dengan nota tertera sudah selesai di proses dan siap antar, kirim share lokasi ya 😉✨";
+      }
+
+      const formattedWA = (order.custWA || '').replace(/^0/, '62');
+      const waUrl = `https://wa.me/${formattedWA}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank');
+    }
+
+    async function sendReceiptToCustomerWA(docId) {
+      const order = allOrders.find(o => o.docId === docId);
+      if (!order) return;
+
+      let message = order.status === 'Selesai' 
+        ? "Halo Gabin lovers, pesanan dengan nota tertera sudah selesai di proses dan siap antar, kirim share lokasi ya 😉✨"
+        : "Halo Gabin lovers, pesanan dengan nota tertera sedang kami proses ya 😉✨";
+
+      if (order.receiptImg) {
+        const a = document.createElement('a');
+        a.href = order.receiptImg;
+        a.download = `Struk_${order.id || 'Nota'}_MyGabin.png`;
+        a.click();
+      }
+
+      const formattedWA = (order.custWA || '').replace(/^0/, '62');
+      const waUrl = `https://wa.me/${formattedWA}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank');
+    }
+
     function exportOrdersToCSV() {
       if (allOrders.length === 0) return alert('Belum ada data pesanan untuk diekspor!');
 
-      // Header Kolom Terpisah
       const headers = ['ID Pesanan', 'Tanggal Transaksi', 'Nama Pemesan', 'WhatsApp', 'Detail Pesanan (Item x Qty)', 'Catatan Pemesan', 'Metode Pembayaran', 'Total Harga (Rp)', 'Status'];
-      
-      let csvRows = [];
-      csvRows.push(headers.join(';')); // Gunakan semicolon (;) agar otomatis rapi terpisah kolom di MS Excel Indonesia
+      let csvRows = [headers.join(';')];
 
       allOrders.forEach(o => {
         const itemsFormatted = o.items ? o.items.map(i => `${i.name} (${i.qty}x)`).join(' + ') : '';
-        
         const row = [
           `"${(o.id || '').replace(/"/g, '""')}"`,
           `"${(o.dateStr || '').replace(/"/g, '""')}"`,
           `"${(o.custName || '').replace(/"/g, '""')}"`,
-          `"'${(o.custWA || '').replace(/"/g, '""')}"`, // Ditambahkan petik tunggal agar format WA tidak truncated/terpotong
+          `"'${(o.custWA || '').replace(/"/g, '""')}"`,
           `"${itemsFormatted.replace(/"/g, '""')}"`,
           `"${(o.custNotes || '-').replace(/"/g, '""')}"`,
           `"${(o.payMethod || '').replace(/"/g, '""')}"`,
@@ -396,7 +477,7 @@
         csvRows.push(row.join(';'));
       });
 
-      const csvContent = '\uFEFF' + csvRows.join('\n'); // Add UTF-8 BOM
+      const csvContent = '\uFEFF' + csvRows.join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -407,7 +488,6 @@
       document.body.removeChild(link);
     }
 
-    // AUTO SYNC GOOGLE SHEETS VIA WEBHOOK (Opsional)
     async function syncToGoogleSheets() {
       if (!GOOGLE_SHEETS_WEBHOOK_URL) {
         alert('Fitur Otomatis Google Sheets memerlukan URL Webhook App Script Anda.\n\nTips: Gunakan tombol "Ekspor CSV Terpisah Kolom" untuk langsung membuka file rapi di Excel!');
@@ -426,7 +506,6 @@
       }
     }
 
-    // FITUR CETAK STRUK/NOTA FISIK DARI DASHBOARD
     function openPrintModal(docId) {
       const o = allOrders.find(ord => ord.docId === docId);
       if (!o) return;
@@ -459,16 +538,6 @@
 
     function closePrintModal() {
       document.getElementById('printReceiptModal').classList.add('hidden');
-    }
-
-    function copyOrderDetails(docId) {
-      const o = allOrders.find(ord => ord.docId === docId);
-      if (!o) return;
-      const itemsList = o.items ? o.items.map(i => `- ${i.name} (${i.qty}x)`).join('\n') : '';
-      const text = `*PESANAN MY GABIN*\nID: ${o.id}\nNama: ${o.custName}\nWA: ${o.custWA}\n\n*Pesanan:*\n${itemsList}\n\n*Total:* Rp ${o.totalPrice.toLocaleString('id-ID')}\n*Metode:* ${o.payMethod}`;
-      
-      navigator.clipboard.writeText(text);
-      alert('Detail pesanan berhasil disalin!');
     }
 
     function openProofModal(docId) {
