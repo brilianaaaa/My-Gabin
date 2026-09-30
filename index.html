@@ -71,7 +71,7 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- FITUR TAHAP 2: CEK STATUS PESANAN -->
+        <!-- FITUR CEK STATUS PESANAN -->
         <button onclick="openTrackModal()" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition">
           <i class="fa-solid fa-truck-fast text-amber-300"></i> Cek Pesanan
         </button>
@@ -214,14 +214,14 @@
     </div>
   </div>
 
-  <!-- MODAL SUKSES (TAHAP 3: TAMBAH STRUK & WA DIRECT LINK) -->
+  <!-- MODAL SUKSES (STRUK DIGITAL SEMENTARA & WA DIRECT) -->
   <div id="successModal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl my-8">
       <div class="w-16 h-16 bg-emerald-100 text-brand-green rounded-full flex items-center justify-center text-3xl mx-auto"><i class="fa-solid fa-circle-check"></i></div>
       <h3 class="font-black text-xl text-brand-darkgreen">Pesanan Berhasil Disimpan!</h3>
       <p class="text-xs text-gray-500">Kode Pesanan Anda: <strong id="createdOrderId" class="text-amber-600"></strong></p>
 
-      <!-- TAMBAHAN TAHAP 3: STRUK DIGITAL SEMENTARA -->
+      <!-- STRUK DIGITAL SEMENTARA -->
       <div id="printableReceipt" class="border rounded-xl p-4 bg-amber-50/50 text-left text-xs space-y-2 font-mono border-dashed border-amber-300">
         <div class="text-center font-bold text-brand-darkgreen border-b border-amber-200 pb-2">
           MY GABIN BANGKALAN<br>
@@ -231,7 +231,7 @@
       </div>
 
       <div class="space-y-2 pt-2">
-        <!-- FITUR TAHAP 3: KIRIM WA SANGAT MUDAH -->
+        <!-- KIRIM WA DIRECT LINK -->
         <a id="btnSendWA" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow text-xs flex items-center justify-center gap-2">
           <i class="fa-brands fa-whatsapp text-lg"></i> Kirim Rincian Pesanan ke WA Penjual
         </a>
@@ -520,7 +520,7 @@
         closeCheckoutModal();
         document.getElementById('createdOrderId').innerText = newId;
 
-        // ISI STRUK NOTA DIGITAL
+        // STRUK DIGITAL SEMENTARA
         let itemsStr = '';
         let waItemsStr = '';
         cart.forEach(i => {
