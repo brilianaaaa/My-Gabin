@@ -35,7 +35,7 @@
           <span class="text-xs text-amber-300">My Gabin Bangkalan</span>
         </div>
       </div>
-      <!-- TOMBOL KHUSUS PENJUAL UNTUK BERALIH KE TAMPILAN PEMBELI -->
+      <!-- TOMBOL BERALIH KE PEMBELI -->
       <a href="index.html" class="bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
         <i class="fa-solid fa-store"></i> Lihat Toko (Tampilan Pembeli)
       </a>
@@ -66,7 +66,7 @@
     <!-- TAB NAVIGASI -->
     <div class="flex border-b border-gray-200">
       <button onclick="switchTab('orders')" id="tabBtnOrders" class="py-2.5 px-5 font-bold text-sm border-b-2 border-brand-green text-brand-green">Daftar Pesanan</button>
-      <button onclick="switchTab('products')" id="tabBtnProducts" class="py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green">Kelola Stok & Produk</button>
+      <button onclick="switchTab('products')" id="tabBtnProducts" class="py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green">Kelola Produk & Stok</button>
     </div>
 
     <!-- SEKSI PESANAN -->
@@ -89,14 +89,70 @@
       </div>
     </section>
 
-    <!-- SEKSI STOK & PRODUK -->
-    <section id="sectionProducts" class="hidden bg-white rounded-2xl shadow border p-4 space-y-4">
+    <!-- SEKSI PRODUK & STOK -->
+    <section id="sectionProducts" class="hidden space-y-6">
       <div class="flex justify-between items-center">
-        <h2 class="font-black text-lg text-brand-darkgreen">Manajemen Stok & Harga</h2>
+        <h2 class="font-black text-xl text-brand-darkgreen">Manajemen Katalog Produk</h2>
+        <button onclick="openProductModal()" class="bg-brand-green hover:bg-brand-darkgreen text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow">
+          <i class="fa-solid fa-plus"></i> Tambah Produk Baru
+        </button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="sellerProductGrid"></div>
     </section>
   </main>
+
+  <!-- MODAL EDIT / TAMBAH PRODUK -->
+  <div id="productModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="modalProductTitle" class="font-black text-lg text-brand-darkgreen">Tambah Produk Baru</h3>
+        <button onclick="closeProductModal()" class="text-gray-500 text-xl">&times;</button>
+      </div>
+
+      <form onsubmit="handleSaveProduct(event)" class="space-y-3">
+        <input type="hidden" id="prodEditId">
+        
+        <div>
+          <label class="block text-xs font-bold mb-1">Nama Produk Varian *</label>
+          <input type="text" id="prodName" required placeholder="Contoh: Gabin Tiramisu" class="w-full border p-2.5 text-sm rounded-lg">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Harga (Rp) *</label>
+            <input type="number" id="prodPrice" required placeholder="12000" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Stok Awal *</label>
+            <input type="number" id="prodStock" required placeholder="10" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold mb-1">Badge Promo (Opsional)</label>
+          <input type="text" id="prodBadge" placeholder="Contoh: Best Seller, Baru, Hemat" class="w-full border p-2.5 text-sm rounded-lg">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold mb-1">Foto Produk *</label>
+          <div class="space-y-2">
+            <!-- PILIH GAMBAR DARI GALERI -->
+            <input type="file" id="prodImageFile" accept="image/*" onchange="previewSelectedImage(event)" class="w-full border p-2 text-xs rounded-lg file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-green file:text-white">
+            <div class="text-[10px] text-gray-400 text-center">- ATAU TEMPEL URL FOTO -</div>
+            <input type="url" id="prodImageUrl" oninput="previewUrlImage()" placeholder="https://..." class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <!-- PREVIEW GAMBAR -->
+          <div id="imagePreviewContainer" class="hidden mt-3">
+            <img id="imagePreview" src="" class="w-full h-40 object-cover rounded-xl border">
+          </div>
+        </div>
+
+        <button type="submit" id="btnSaveProd" class="w-full bg-brand-green hover:bg-brand-darkgreen text-white font-bold py-3 rounded-xl shadow transition">
+          Simpan Produk
+        </button>
+      </form>
+    </div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -114,6 +170,7 @@
 
     let allOrders = [];
     let allProducts = [];
+    let currentBase64Image = '';
 
     // Real-time listener Orders
     db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
@@ -151,7 +208,7 @@
       }
 
       allOrders.forEach(o => {
-        const itemsList = o.items.map(i => `${i.name} x${i.qty}`).join(', ');
+        const itemsList = o.items ? o.items.map(i => `${i.name} x${i.qty}`).join(', ') : '-';
         const waLink = `https://wa.me/${o.custWA.replace(/^0/, '62')}?text=Halo%20${encodeURIComponent(o.custName)},%20terima%20kasih%20sudah%20memesan%20My%20Gabin!`;
 
         tbody.innerHTML += `
@@ -194,20 +251,145 @@
 
       allProducts.forEach(p => {
         grid.innerHTML += `
-          <div class="bg-gray-50 border rounded-xl p-3 flex items-center gap-3">
-            <img src="${p.img}" class="w-16 h-16 object-cover rounded-lg">
-            <div class="flex-1 space-y-1">
-              <div class="font-bold text-sm">${p.name}</div>
-              <div class="text-xs text-gray-500">Harga: Rp ${(p.price || 0).toLocaleString('id-ID')}</div>
+          <div class="bg-white border rounded-2xl p-4 shadow flex flex-col justify-between space-y-3">
+            <div class="flex items-center gap-3">
+              <img src="${p.img}" class="w-20 h-20 object-cover rounded-xl border">
+              <div class="flex-1 space-y-1">
+                <div class="font-bold text-base text-gray-800">${p.name}</div>
+                <div class="text-sm font-black text-brand-darkgreen">Rp ${(p.price || 0).toLocaleString('id-ID')}</div>
+                ${p.badge ? `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${p.badge}</span>` : ''}
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between border-t pt-3">
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold">Stok:</span>
-                <input type="number" id="stockInput_${p.id}" value="${p.stock}" class="w-16 border rounded px-1.5 py-0.5 text-xs font-bold text-center">
-                <button onclick="saveStock('${p.id}')" class="bg-brand-green text-white px-2 py-0.5 rounded text-xs font-bold hover:bg-brand-darkgreen">Simpan</button>
+                <span class="text-xs font-bold text-gray-500">Stok:</span>
+                <input type="number" id="stockInput_${p.id}" value="${p.stock}" class="w-16 border rounded-lg px-2 py-1 text-xs font-bold text-center">
+                <button onclick="saveStock('${p.id}')" class="bg-brand-green text-white px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-brand-darkgreen">
+                  Simpan
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="openEditProductModal('${p.id}')" class="bg-amber-500 text-brand-darkgreen font-bold px-2.5 py-1 rounded-lg text-xs hover:bg-amber-400">
+                  <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button onclick="deleteProduct('${p.id}')" class="bg-red-500 text-white font-bold px-2 py-1 rounded-lg text-xs hover:bg-red-600">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
               </div>
             </div>
           </div>
         `;
       });
+    }
+
+    // KONVERSI FOTO GALERI
+    function previewSelectedImage(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        currentBase64Image = evt.target.result;
+        document.getElementById('prodImageUrl').value = ''; 
+        document.getElementById('imagePreview').src = currentBase64Image;
+        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function previewUrlImage() {
+      const url = document.getElementById('prodImageUrl').value;
+      if (url) {
+        currentBase64Image = '';
+        document.getElementById('imagePreview').src = url;
+        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+      }
+    }
+
+    function openProductModal() {
+      document.getElementById('prodEditId').value = '';
+      document.getElementById('modalProductTitle').innerText = 'Tambah Produk Baru';
+      document.getElementById('prodName').value = '';
+      document.getElementById('prodPrice').value = '';
+      document.getElementById('prodStock').value = '';
+      document.getElementById('prodBadge').value = '';
+      document.getElementById('prodImageFile').value = '';
+      document.getElementById('prodImageUrl').value = '';
+      document.getElementById('imagePreviewContainer').classList.add('hidden');
+      currentBase64Image = '';
+      document.getElementById('productModal').classList.remove('hidden');
+    }
+
+    function openEditProductModal(id) {
+      const p = allProducts.find(prod => prod.id === id);
+      if (!p) return;
+
+      document.getElementById('prodEditId').value = p.id;
+      document.getElementById('modalProductTitle').innerText = 'Edit Produk';
+      document.getElementById('prodName').value = p.name;
+      document.getElementById('prodPrice').value = p.price;
+      document.getElementById('prodStock').value = p.stock;
+      document.getElementById('prodBadge').value = p.badge || '';
+      document.getElementById('prodImageFile').value = '';
+      document.getElementById('prodImageUrl').value = p.img.startsWith('data:') ? '' : p.img;
+      
+      currentBase64Image = p.img;
+      document.getElementById('imagePreview').src = p.img;
+      document.getElementById('imagePreviewContainer').classList.remove('hidden');
+
+      document.getElementById('productModal').classList.remove('hidden');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.add('hidden');
+    }
+
+    async function handleSaveProduct(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveProd');
+      btn.disabled = true;
+
+      const editId = document.getElementById('prodEditId').value;
+      const name = document.getElementById('prodName').value;
+      const price = parseInt(document.getElementById('prodPrice').value) || 0;
+      const stock = parseInt(document.getElementById('prodStock').value) || 0;
+      const badge = document.getElementById('prodBadge').value;
+      const urlImg = document.getElementById('prodImageUrl').value;
+
+      const finalImg = currentBase64Image || urlImg;
+
+      if (!finalImg) {
+        alert('Silakan pilih foto dari galeri atau masukkan URL foto!');
+        btn.disabled = false;
+        return;
+      }
+
+      const prodData = { name, price, stock, badge, img: finalImg };
+
+      try {
+        if (editId) {
+          await db.collection('products').doc(editId).update(prodData);
+          alert('Produk berhasil diperbarui!');
+        } else {
+          const newDoc = db.collection('products').doc();
+          await newDoc.set({ id: newDoc.id, rating: '5.0', ...prodData });
+          alert('Produk baru berhasil ditambahkan!');
+        }
+        closeProductModal();
+      } catch (err) {
+        alert('Gagal menyimpan produk: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteProduct(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
+        await db.collection('products').doc(id).delete();
+        alert('Produk berhasil dihapus!');
+      }
     }
 
     async function updateOrderStatus(docId, status) {
