@@ -64,9 +64,16 @@
     </div>
 
     <!-- TAB NAVIGASI -->
-    <div class="flex border-b border-gray-200">
-      <button onclick="switchTab('orders')" id="tabBtnOrders" class="py-2.5 px-5 font-bold text-sm border-b-2 border-brand-green text-brand-green">Daftar Pesanan</button>
-      <button onclick="switchTab('products')" id="tabBtnProducts" class="py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green">Kelola Produk & Stok</button>
+    <div class="flex border-b border-gray-200 justify-between items-center">
+      <div class="flex">
+        <button onclick="switchTab('orders')" id="tabBtnOrders" class="py-2.5 px-5 font-bold text-sm border-b-2 border-brand-green text-brand-green">Daftar Pesanan</button>
+        <button onclick="switchTab('products')" id="tabBtnProducts" class="py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green">Kelola Produk & Stok</button>
+      </div>
+
+      <!-- TAHAP 3: TOMBOL EKSPOR DATA EXCEL -->
+      <button onclick="exportOrdersToCSV()" class="hidden md:flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition">
+        <i class="fa-solid fa-file-excel"></i> Ekspor CSV / Excel
+      </button>
     </div>
 
     <!-- SEKSI PESANAN -->
@@ -74,7 +81,6 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-3">
         <h2 class="font-black text-lg text-brand-darkgreen">Daftar Pesanan Masuk</h2>
         
-        <!-- FITUR BARU TAHAP 2: FILTER & PENCARIAN -->
         <div class="flex flex-wrap items-center gap-2">
           <input type="text" id="orderSearchInput" oninput="renderOrdersUI()" placeholder="Cari nama / ID..." class="border rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-green">
           <select id="orderStatusFilter" onchange="renderOrdersUI()" class="border rounded-xl px-3 py-1.5 text-xs font-semibold bg-gray-50">
@@ -194,13 +200,18 @@
     let allOrders = [];
     let allProducts = [];
     let currentBase64Image = '';
+    let initialLoad = true;
 
     // Real-time listener Orders
     db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+      const isNewOrder = !initialLoad && snapshot.docChanges().some(change => change.type === 'added');
+      if (isNewOrder) playNotificationSound();
+
       allOrders = [];
       snapshot.forEach(doc => allOrders.push({ docId: doc.id, ...doc.data() }));
       renderOrdersUI();
       updateStats();
+      initialLoad = false;
     });
 
     // Real-time listener Products
@@ -209,6 +220,18 @@
       snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
       renderSellerProductsUI();
     });
+
+    function playNotificationSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } catch (e) {}
+    }
 
     function updateStats() {
       document.getElementById('statTotalOrders').innerText = allOrders.length;
@@ -277,6 +300,24 @@
           </tr>
         `;
       });
+    }
+
+    function exportOrdersToCSV() {
+      if (allOrders.length === 0) return alert('Belum ada data pesanan untuk diekspor!');
+
+      let csv = 'ID Pesanan,Tanggal,Nama Pemesan,WhatsApp,Metode Pembayaran,Total,Status\n';
+      allOrders.forEach(o => {
+        csv += `"${o.id}","${o.dateStr}","${o.custName}","${o.custWA}","${o.payMethod}",${o.totalPrice},"${o.status}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Rekap_Pesanan_MyGabin_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     function copyOrderDetails(docId) {
