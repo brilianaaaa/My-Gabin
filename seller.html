@@ -79,7 +79,7 @@
               <th class="p-3">ID / Waktu</th>
               <th class="p-3">Pemesan</th>
               <th class="p-3">Detail Pesanan</th>
-              <th class="p-3">Total & Bayar</th>
+              <th class="p-3">Total & Pembayaran</th>
               <th class="p-3">Status</th>
               <th class="p-3 text-center">Aksi</th>
             </tr>
@@ -100,6 +100,17 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="sellerProductGrid"></div>
     </section>
   </main>
+
+  <!-- MODAL DETAIL BUKTI BAYAR -->
+  <div id="proofModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-black text-sm text-brand-darkgreen">Bukti Pembayaran Transfer</h3>
+        <button onclick="closeProofModal()" class="text-gray-500 text-lg">&times;</button>
+      </div>
+      <img id="modalProofImg" src="" class="w-full max-h-96 object-contain rounded-lg border bg-gray-50">
+    </div>
+  </div>
 
   <!-- MODAL EDIT / TAMBAH PRODUK -->
   <div id="productModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -229,6 +240,7 @@
             <td class="p-3">
               <div class="font-black text-brand-darkgreen">Rp ${(o.totalPrice || 0).toLocaleString('id-ID')}</div>
               <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 border">${o.payMethod}</span>
+              ${o.payProof ? `<br><button onclick="openProofModal('${o.docId}')" class="mt-1 text-[10px] font-bold text-blue-600 underline"><i class="fa-solid fa-image"></i> Lihat Bukti Bayar</button>` : ''}
             </td>
             <td class="p-3">
               <span class="px-2 py-1 rounded-full text-[10px] font-bold ${
@@ -243,6 +255,17 @@
           </tr>
         `;
       });
+    }
+
+    function openProofModal(docId) {
+      const order = allOrders.find(o => o.docId === docId);
+      if (!order || !order.payProof) return;
+      document.getElementById('modalProofImg').src = order.payProof;
+      document.getElementById('proofModal').classList.remove('hidden');
+    }
+
+    function closeProofModal() {
+      document.getElementById('proofModal').classList.add('hidden');
     }
 
     function renderSellerProductsUI() {
@@ -284,7 +307,6 @@
       });
     }
 
-    // KONVERSI FOTO GALERI
     function previewSelectedImage(e) {
       const file = e.target.files[0];
       if (!file) return;
