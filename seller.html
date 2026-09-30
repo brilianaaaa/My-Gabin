@@ -70,8 +70,22 @@
     </div>
 
     <!-- SEKSI PESANAN -->
-    <section id="sectionOrders" class="bg-white rounded-2xl shadow border p-4">
-      <h2 class="font-black text-lg text-brand-darkgreen mb-4">Daftar Pesanan Masuk</h2>
+    <section id="sectionOrders" class="bg-white rounded-2xl shadow border p-4 space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-3">
+        <h2 class="font-black text-lg text-brand-darkgreen">Daftar Pesanan Masuk</h2>
+        
+        <!-- FITUR BARU TAHAP 2: FILTER & PENCARIAN -->
+        <div class="flex flex-wrap items-center gap-2">
+          <input type="text" id="orderSearchInput" oninput="renderOrdersUI()" placeholder="Cari nama / ID..." class="border rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-green">
+          <select id="orderStatusFilter" onchange="renderOrdersUI()" class="border rounded-xl px-3 py-1.5 text-xs font-semibold bg-gray-50">
+            <option value="ALL">Semua Status</option>
+            <option value="Menunggu Konfirmasi">Menunggu Konfirmasi</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Dibatalkan">Dibatalkan</option>
+          </select>
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs md:text-sm">
           <thead class="bg-gray-50 text-gray-600 uppercase border-b">
@@ -147,12 +161,10 @@
         <div>
           <label class="block text-xs font-bold mb-1">Foto Produk *</label>
           <div class="space-y-2">
-            <!-- PILIH GAMBAR DARI GALERI -->
             <input type="file" id="prodImageFile" accept="image/*" onchange="previewSelectedImage(event)" class="w-full border p-2 text-xs rounded-lg file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-green file:text-white">
             <div class="text-[10px] text-gray-400 text-center">- ATAU TEMPEL URL FOTO -</div>
             <input type="url" id="prodImageUrl" oninput="previewUrlImage()" placeholder="https://..." class="w-full border p-2.5 text-sm rounded-lg">
           </div>
-          <!-- PREVIEW GAMBAR -->
           <div id="imagePreviewContainer" class="hidden mt-3">
             <img id="imagePreview" src="" class="w-full h-40 object-cover rounded-xl border">
           </div>
@@ -211,27 +223,36 @@
 
     function renderOrdersUI() {
       const tbody = document.getElementById('ordersTableBody');
+      const searchQuery = (document.getElementById('orderSearchInput')?.value || '').toLowerCase();
+      const statusFilter = document.getElementById('orderStatusFilter')?.value || 'ALL';
+      
       tbody.innerHTML = '';
 
-      if (allOrders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Belum ada pesanan masuk.</td></tr>';
+      let filtered = allOrders.filter(o => {
+        const matchSearch = (o.custName || '').toLowerCase().includes(searchQuery) || (o.id || '').toLowerCase().includes(searchQuery);
+        const matchStatus = statusFilter === 'ALL' || o.status === statusFilter;
+        return matchSearch && matchStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Pesanan tidak ditemukan.</td></tr>';
         return;
       }
 
-      allOrders.forEach(o => {
+      filtered.forEach(o => {
         const itemsList = o.items ? o.items.map(i => `${i.name} x${i.qty}`).join(', ') : '-';
-        const waLink = `https://wa.me/${o.custWA.replace(/^0/, '62')}?text=Halo%20${encodeURIComponent(o.custName)},%20terima%20kasih%20sudah%20memesan%20My%20Gabin!`;
+        const waLink = `https://wa.me/${o.custWA.replace(/^0/, '62')}?text=Halo%20${encodeURIComponent(o.custName)},%20mengenai%20pesanan%20My%20Gabin%20kode%20${o.id}%20...`;
 
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
             <td class="p-3">
-              <div class="font-bold">${o.id || o.docId}</div>
+              <div class="font-bold text-brand-darkgreen">${o.id || o.docId}</div>
               <div class="text-[10px] text-gray-400">${o.dateStr || ''}</div>
             </td>
             <td class="p-3">
               <div class="font-bold">${o.custName}</div>
               <a href="${waLink}" target="_blank" class="text-emerald-600 hover:underline text-xs"><i class="fa-brands fa-whatsapp"></i> ${o.custWA}</a>
-              ${o.custMaps ? `<br><a href="${o.custMaps}" target="_blank" class="text-blue-500 underline text-[10px]">Lihat Lokasi Maps</a>` : ''}
+              ${o.custMaps ? `<br><a href="${o.custMaps}" target="_blank" class="text-blue-500 underline text-[10px]"><i class="fa-solid fa-map-pin"></i> Maps</a>` : ''}
             </td>
             <td class="p-3">
               <div class="text-xs font-semibold">${itemsList}</div>
@@ -240,7 +261,7 @@
             <td class="p-3">
               <div class="font-black text-brand-darkgreen">Rp ${(o.totalPrice || 0).toLocaleString('id-ID')}</div>
               <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 border">${o.payMethod}</span>
-              ${o.payProof ? `<br><button onclick="openProofModal('${o.docId}')" class="mt-1 text-[10px] font-bold text-blue-600 underline"><i class="fa-solid fa-image"></i> Lihat Bukti Bayar</button>` : ''}
+              ${o.payProof ? `<br><button onclick="openProofModal('${o.docId}')" class="mt-1 text-[10px] font-bold text-blue-600 underline"><i class="fa-solid fa-image"></i> Lihat Bukti</button>` : ''}
             </td>
             <td class="p-3">
               <span class="px-2 py-1 rounded-full text-[10px] font-bold ${
@@ -249,12 +270,23 @@
               }">${o.status}</span>
             </td>
             <td class="p-3 text-center space-x-1">
+              <button onclick="copyOrderDetails('${o.docId}')" title="Salin Ringkasan Pesanan" class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs hover:bg-gray-300"><i class="fa-solid fa-copy"></i></button>
               <button onclick="updateOrderStatus('${o.docId}', 'Selesai')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs hover:bg-emerald-700">Selesai</button>
               <button onclick="updateOrderStatus('${o.docId}', 'Dibatalkan')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">Batal</button>
             </td>
           </tr>
         `;
       });
+    }
+
+    function copyOrderDetails(docId) {
+      const o = allOrders.find(ord => ord.docId === docId);
+      if (!o) return;
+      const itemsList = o.items ? o.items.map(i => `- ${i.name} (${i.qty}x)`).join('\n') : '';
+      const text = `*PESANAN MY GABIN*\nID: ${o.id}\nNama: ${o.custName}\nWA: ${o.custWA}\n\n*Pesanan:*\n${itemsList}\n\n*Total:* Rp ${o.totalPrice.toLocaleString('id-ID')}\n*Metode:* ${o.payMethod}`;
+      
+      navigator.clipboard.writeText(text);
+      alert('Detail pesanan berhasil disalin!');
     }
 
     function openProofModal(docId) {

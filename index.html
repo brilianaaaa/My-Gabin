@@ -25,7 +25,7 @@
 </head>
 <body class="bg-brand-cream text-gray-800 font-sans min-h-screen flex flex-col relative">
 
-  <!-- POP-UP NOTIFIKASI TOAST (KERANJANG) -->
+  <!-- POP-UP NOTIFIKASI TOAST -->
   <div id="toastNotification" class="fixed top-5 right-5 z-50 transform translate-x-72 opacity-0 transition-all duration-300 pointer-events-none bg-brand-darkgreen text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-amber-400">
     <div class="w-8 h-8 bg-amber-400 text-brand-darkgreen rounded-full flex items-center justify-center font-black text-sm">
       <i class="fa-solid fa-check"></i>
@@ -64,6 +64,11 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- FITUR BARU TAHAP 2: CEK STATUS PESANAN -->
+        <button onclick="openTrackModal()" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-truck-fast text-amber-300"></i> Cek Pesanan
+        </button>
+
         <!-- TOMBOL KERANJANG -->
         <button onclick="toggleCartDrawer()" class="relative bg-brand-darkgreen p-2.5 rounded-full hover:bg-emerald-800 transition">
           <i class="fa-solid fa-shopping-bag text-lg text-amber-300"></i>
@@ -88,6 +93,14 @@
       </div>
     </div>
 
+    <!-- FITUR BARU TAHAP 2: FILTER KATEGORI/BADGE -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-2 no-scrollbar">
+      <button onclick="filterCategory('ALL')" class="badge-btn active border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white">Semua Varian</button>
+      <button onclick="filterCategory('Terlaris')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🔥 Terlaris</button>
+      <button onclick="filterCategory('Hemat')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🏷️ Paket Hemat</button>
+      <button onclick="filterCategory('Baru')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">✨ Varian Baru</button>
+    </div>
+
     <!-- KATALOG MENU -->
     <section id="menu-section" class="mb-10">
       <h2 class="text-2xl font-black text-brand-darkgreen mb-6">Menu Varian My Gabin</h2>
@@ -104,7 +117,13 @@
         <button onclick="toggleCartDrawer()" class="text-xl">&times;</button>
       </div>
       <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+      
+      <!-- RINCIAN HARGA TAHAP 2 -->
       <div class="p-4 border-t bg-gray-50 space-y-3">
+        <div class="space-y-1 text-xs text-gray-600 border-b pb-2">
+          <div class="flex justify-between"><span>Subtotal:</span><span id="cartSubtotal" class="font-bold">Rp 0</span></div>
+          <div class="flex justify-between text-emerald-600 font-bold"><span>Ongkos Kirim:</span><span>GRATIS</span></div>
+        </div>
         <div class="flex justify-between font-black text-lg"><span>Total:</span><span id="cartTotal" class="text-brand-darkgreen">Rp 0</span></div>
         <button id="btnToCheckout" onclick="openCheckoutModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold py-3 rounded-xl shadow">Lanjut Pemesanan</button>
       </div>
@@ -144,7 +163,6 @@
           </select>
         </div>
 
-        <!-- Rincian Rekening & Upload Bukti Bayar Wajib -->
         <div id="paymentDetailBox" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs space-y-3">
           <div id="bankBNIDetail" class="hidden">
             <strong>Rekening BNI:</strong> <span class="font-black text-brand-darkgreen">1863851872</span> (a.n Adinda Jingga Julistiraaa)
@@ -153,7 +171,6 @@
             <strong>ShopeePay:</strong> <span class="font-black text-orange-600">+62 859-3661-8342</span> (a.n Adinda Jingga Julistiraaa)
           </div>
           
-          <!-- INPUT BUKTI TRANSFER WAJIB -->
           <div class="border-t border-amber-200 pt-2">
             <label class="block text-xs font-bold text-red-600 mb-1">
               <i class="fa-solid fa-file-invoice"></i> Upload Bukti Pembayaran (Wajib) *
@@ -170,12 +187,33 @@
     </div>
   </div>
 
+  <!-- FITUR BARU TAHAP 2: MODAL Lacak PESANAN -->
+  <div id="trackModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-black text-base text-brand-darkgreen">Lacak Pesanan Anda</h3>
+        <button onclick="closeTrackModal()" class="text-gray-500 text-lg">&times;</button>
+      </div>
+      
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-gray-600 block">Masukkan Kode Pesanan (ID):</label>
+        <div class="flex gap-2">
+          <input type="text" id="trackOrderIdInput" placeholder="Contoh: MGB-123456" class="flex-1 border p-2 text-xs rounded-xl uppercase">
+          <button onclick="searchOrderStatus()" class="bg-brand-green text-white font-bold px-3 py-2 rounded-xl text-xs">Cari</button>
+        </div>
+      </div>
+
+      <div id="trackResult" class="hidden border rounded-xl p-3 bg-gray-50 text-xs space-y-2"></div>
+    </div>
+  </div>
+
   <!-- MODAL SUKSES -->
   <div id="successModal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
       <div class="w-16 h-16 bg-emerald-100 text-brand-green rounded-full flex items-center justify-center text-3xl mx-auto"><i class="fa-solid fa-circle-check"></i></div>
       <h3 class="font-black text-xl text-brand-darkgreen">Pesanan Berhasil Disimpan!</h3>
-      <p class="text-xs text-gray-500">Pesanan Anda telah masuk secara real-time ke sistem penjual.</p>
+      <p class="text-xs text-gray-500">Kode Pesanan Anda: <strong id="createdOrderId" class="text-amber-600"></strong></p>
+      <p class="text-[11px] text-gray-400">Simpan kode di atas untuk melacak status pesanan Anda.</p>
       <button onclick="location.reload()" class="w-full bg-brand-green text-white font-bold py-2.5 rounded-xl shadow text-sm">Selesai</button>
     </div>
   </div>
@@ -197,17 +235,18 @@
 
     const defaultProducts = [
       { id: "1", name: 'Coklat Cips', price: 12000, stock: 25, rating: '4.8', img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=500&q=80', badge: 'Terlaris' },
-      { id: "2", name: 'Strobery', price: 14000, stock: 20, rating: '4.9', img: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80', badge: 'Favorit' },
+      { id: "2", name: 'Strobery', price: 14000, stock: 20, rating: '4.9', img: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80', badge: 'Terlaris' },
       { id: "3", name: 'Vanila Blubery', price: 12000, stock: 18, rating: '4.7', img: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?auto=format&fit=crop&w=500&q=80', badge: '' },
       { id: "4", name: 'Cokkis and Cream', price: 13000, stock: 15, rating: '4.8', img: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=500&q=80', badge: '' },
       { id: "5", name: 'Macha Oreo', price: 14000, stock: 12, rating: '4.8', img: 'https://images.unsplash.com/photo-1505394033641-40c6ad1178d7?auto=format&fit=crop&w=500&q=80', badge: 'Baru' },
       { id: "6", name: 'Paket A (Mix 3)', price: 35000, stock: 10, rating: '5.0', img: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=500&q=80', badge: 'Hemat' },
-      { id: "7", name: 'Paket B (Isi 5 All Varian)', price: 60000, stock: 8, rating: '5.0', img: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?auto=format&fit=crop&w=500&q=80', badge: 'Super Hemat' }
+      { id: "7", name: 'Paket B (Isi 5 All Varian)', price: 60000, stock: 8, rating: '5.0', img: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?auto=format&fit=crop&w=500&q=80', badge: 'Hemat' }
     ];
 
     let products = [];
     let cart = [];
     let payProofBase64 = '';
+    let selectedCategory = 'ALL';
 
     db.collection('products').onSnapshot(snapshot => {
       if (snapshot.empty) {
@@ -219,15 +258,28 @@
       }
     });
 
+    function filterCategory(cat) {
+      selectedCategory = cat;
+      document.querySelectorAll('.badge-btn').forEach(b => {
+        b.className = 'badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100';
+      });
+      event.target.className = 'badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white';
+      renderProductsUI();
+    }
+
     function renderProductsUI() {
       const query = document.getElementById('searchInput')?.value.toLowerCase() || '';
       const grid = document.getElementById('productGrid');
       grid.innerHTML = '';
 
-      const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+      const filtered = products.filter(p => {
+        const matchName = p.name.toLowerCase().includes(query);
+        const matchCat = selectedCategory === 'ALL' || (p.badge && p.badge.toLowerCase().includes(selectedCategory.toLowerCase()));
+        return matchName && matchCat;
+      });
 
       if (filtered.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">Tidak ada varian produk yang sesuai dengan pencarian Anda.</div>';
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">Tidak ada varian produk yang sesuai.</div>';
         return;
       }
 
@@ -256,7 +308,6 @@
       });
     }
 
-    // FUNGSI NOTIFIKASI POP-UP TOAST
     function showToast(message) {
       const toast = document.getElementById('toastNotification');
       document.getElementById('toastMessage').innerText = message;
@@ -278,12 +329,12 @@
           item.qty++;
           showToast(`Jumlah ${p.name} ditambah!`);
         } else {
-          alert(`Jumlah pesanan telah mencapai batas stok yang tersedia (${p.stock}).`);
+          alert(`Batas stok tercapai (${p.stock}).`);
           return;
         }
       } else {
         cart.push({ ...p, qty: 1 });
-        showToast(`${p.name} berhasil masuk keranjang!`);
+        showToast(`${p.name} masuk keranjang!`);
       }
       updateCartUI();
     }
@@ -315,6 +366,7 @@
           </div>
         `;
       });
+      document.getElementById('cartSubtotal').innerText = `Rp ${total.toLocaleString('id-ID')}`;
       document.getElementById('cartTotal').innerText = `Rp ${total.toLocaleString('id-ID')}`;
     }
 
@@ -342,6 +394,30 @@
     }
     function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
 
+    function openTrackModal() { document.getElementById('trackModal').classList.remove('hidden'); }
+    function closeTrackModal() { document.getElementById('trackModal').classList.add('hidden'); }
+
+    async function searchOrderStatus() {
+      const code = document.getElementById('trackOrderIdInput').value.trim().toUpperCase();
+      const resBox = document.getElementById('trackResult');
+      if (!code) return;
+
+      resBox.classList.remove('hidden');
+      resBox.innerHTML = '<span class="text-gray-400">Mencari...</span>';
+
+      const snap = await db.collection('orders').where('id', '==', code).get();
+      if (snap.empty) {
+        resBox.innerHTML = '<span class="text-red-500 font-bold">Pesanan tidak ditemukan! Periksa kembali ID Anda.</span>';
+      } else {
+        const o = snap.docs[0].data();
+        resBox.innerHTML = `
+          <div><strong>Pemesan:</strong> ${o.custName}</div>
+          <div><strong>Total:</strong> Rp ${o.totalPrice.toLocaleString('id-ID')}</div>
+          <div><strong>Status:</strong> <span class="font-bold text-amber-600">${o.status}</span></div>
+        `;
+      }
+    }
+
     function togglePaymentDetails() {
       const method = document.getElementById('payMethod').value;
       const box = document.getElementById('paymentDetailBox');
@@ -352,7 +428,7 @@
         fileInput.removeAttribute('required');
       } else {
         box.classList.remove('hidden');
-        fileInput.setAttribute('required', 'required'); // WAJIB UPLOAD BUKTI BILA TRANSFER
+        fileInput.setAttribute('required', 'required');
         document.getElementById('bankBNIDetail').classList.toggle('hidden', method !== 'Transfer BNI');
         document.getElementById('shopeePayDetail').classList.toggle('hidden', method !== 'ShopeePay');
       }
@@ -382,8 +458,9 @@
 
       document.getElementById('btnSubmitOrder').disabled = true;
 
+      const newId = 'MGB-' + Date.now().toString().slice(-6);
       const orderData = {
-        id: 'MGB-' + Date.now().toString().slice(-6),
+        id: newId,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         dateStr: new Date().toLocaleString('id-ID'),
         custName: document.getElementById('custName').value,
@@ -409,6 +486,7 @@
         }
 
         closeCheckoutModal();
+        document.getElementById('createdOrderId').innerText = newId;
         document.getElementById('successModal').classList.remove('hidden');
       } catch (error) {
         alert('Terjadi kesalahan saat membuat pesanan: ' + error.message);
