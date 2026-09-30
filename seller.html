@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Penjual - Dashboard My Gabin</title>
+  <title>Dashboard Penjual - My Gabin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
@@ -13,165 +13,89 @@
 
   <script>
     tailwind.config = {
-      theme: { extend: { colors: { brand: { green: '#105948', darkgreen: '#0b3e33', gold: '#d97706', cream: '#fdfbf7' } } } }
+      theme: {
+        extend: {
+          colors: {
+            brand: { green: '#105948', darkgreen: '#0b3e33', gold: '#d97706' }
+          }
+        }
+      }
     }
   </script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-  <!-- HEADER -->
-  <header class="bg-brand-darkgreen text-white shadow-md p-4 flex justify-between items-center sticky top-0 z-30">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center text-brand-darkgreen font-black text-lg shadow">MG</div>
-      <h1 class="text-lg md:text-xl font-black tracking-tight">Dashboard Penjual My Gabin</h1>
-    </div>
-    <div class="flex items-center gap-2">
-      <button id="btnEnableSound" onclick="enableAudioAlert()" class="bg-amber-500 hover:bg-amber-400 text-brand-darkgreen text-xs font-bold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
-        <i class="fa-solid fa-bell"></i> <span>Aktifkan Suara Notifikasi</span>
-      </button>
-      <a href="index.html" target="_blank" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
-        <i class="fa-solid fa-store"></i> <span class="hidden md:inline">Lihat Toko</span>
+  <!-- HEADER DASHBOARD -->
+  <header class="bg-brand-darkgreen text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-400 text-brand-darkgreen rounded-xl flex items-center justify-center font-black text-lg">MG</div>
+        <div>
+          <h1 class="font-black text-lg leading-none">Dashboard Penjual</h1>
+          <span class="text-xs text-amber-300">My Gabin Bangkalan</span>
+        </div>
+      </div>
+      <!-- TOMBOL KHUSUS PENJUAL UNTUK BERALIH KE TAMPILAN PEMBELI -->
+      <a href="index.html" class="bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
+        <i class="fa-solid fa-store"></i> Lihat Toko (Tampilan Pembeli)
       </a>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6 space-y-8">
-
-    <!-- RINGKASAN STATISTIK -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
-        <div>
-          <div class="text-xs font-bold text-gray-400 uppercase">Total Pesanan</div>
-          <div id="statOrders" class="text-3xl font-black text-gray-800 mt-1">0</div>
-        </div>
-        <div class="w-12 h-12 bg-emerald-50 text-brand-green rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-shopping-cart"></i></div>
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <!-- RINGKASAN DATA -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-2xl shadow border">
+        <div class="text-xs font-bold text-gray-400">Total Pesanan</div>
+        <div id="statTotalOrders" class="text-2xl font-black text-brand-darkgreen">0</div>
       </div>
-
-      <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
-        <div>
-          <div class="text-xs font-bold text-gray-400 uppercase">Total Pendapatan</div>
-          <div id="statRevenue" class="text-3xl font-black text-brand-green mt-1">Rp 0</div>
-        </div>
-        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-wallet"></i></div>
+      <div class="bg-white p-4 rounded-2xl shadow border">
+        <div class="text-xs font-bold text-gray-400">Pesanan Masuk</div>
+        <div id="statPendingOrders" class="text-2xl font-black text-amber-500">0</div>
       </div>
-
-      <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
-        <div>
-          <div class="text-xs font-bold text-gray-400 uppercase">Status Sistem</div>
-          <div id="soundStatus" class="text-xs font-bold text-amber-600 mt-2 flex items-center gap-1.5">
-            <i class="fa-solid fa-circle-exclamation"></i> Klik "Aktifkan Suara"
-          </div>
-        </div>
-        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-tower-broadcast"></i></div>
+      <div class="bg-white p-4 rounded-2xl shadow border">
+        <div class="text-xs font-bold text-gray-400">Pesanan Selesai</div>
+        <div id="statCompletedOrders" class="text-2xl font-black text-emerald-600">0</div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl shadow border">
+        <div class="text-xs font-bold text-gray-400">Total Pendapatan</div>
+        <div id="statRevenue" class="text-xl font-black text-brand-darkgreen">Rp 0</div>
       </div>
     </div>
 
-    <!-- TABEL DATA PESANAN -->
-    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <div class="p-4 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-2">
-        <h2 class="font-bold text-gray-800 flex items-center gap-2">
-          <i class="fa-solid fa-receipt text-brand-green"></i> Data Pesanan Masuk (Real-Time)
-        </h2>
-        <span class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-bold">
-          <i class="fa-solid fa-arrows-rotate animate-spin"></i> Terhubung ke Firestore
-        </span>
-      </div>
-      
+    <!-- TAB NAVIGASI -->
+    <div class="flex border-b border-gray-200">
+      <button onclick="switchTab('orders')" id="tabBtnOrders" class="py-2.5 px-5 font-bold text-sm border-b-2 border-brand-green text-brand-green">Daftar Pesanan</button>
+      <button onclick="switchTab('products')" id="tabBtnProducts" class="py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green">Kelola Stok & Produk</button>
+    </div>
+
+    <!-- SEKSI PESANAN -->
+    <section id="sectionOrders" class="bg-white rounded-2xl shadow border p-4">
+      <h2 class="font-black text-lg text-brand-darkgreen mb-4">Daftar Pesanan Masuk</h2>
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="bg-gray-100 border-b text-gray-600 font-bold uppercase">
-              <th class="p-3">ID / Tanggal</th>
-              <th class="p-3">Pelanggan & WA</th>
-              <th class="p-3">Item Pesanan</th>
-              <th class="p-3">Bayar</th>
-              <th class="p-3">Total</th>
-              <th class="p-3">Maps & Catatan</th>
-              <th class="p-3">Status Pesanan</th>
+        <table class="w-full text-left text-xs md:text-sm">
+          <thead class="bg-gray-50 text-gray-600 uppercase border-b">
+            <tr>
+              <th class="p-3">ID / Waktu</th>
+              <th class="p-3">Pemesan</th>
+              <th class="p-3">Detail Pesanan</th>
+              <th class="p-3">Total & Bayar</th>
+              <th class="p-3">Status</th>
               <th class="p-3 text-center">Aksi</th>
             </tr>
           </thead>
-          <tbody id="ordersTable" class="divide-y">
-            <tr><td colspan="8" class="p-4 text-center text-gray-400">Memuat data pesanan...</td></tr>
-          </tbody>
+          <tbody id="ordersTableBody" class="divide-y"></tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-    <!-- FITUR KELOLA STOK, HARGA & FOTO PRODUK -->
-    <div class="bg-white rounded-2xl border shadow-sm p-6 space-y-6">
-      <div class="flex justify-between items-center border-b pb-4">
-        <div>
-          <h2 class="font-black text-lg text-brand-darkgreen flex items-center gap-2">
-            <i class="fa-solid fa-boxes-stacked text-amber-500"></i> Kelola Varian, Stok & Upload Foto Produk
-          </h2>
-          <p class="text-xs text-gray-500">Atur stok, harga, deskripsi, serta upload foto produk langsung dari galeri HP/Laptop.</p>
-        </div>
+    <!-- SEKSI STOK & PRODUK -->
+    <section id="sectionProducts" class="hidden bg-white rounded-2xl shadow border p-4 space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="font-black text-lg text-brand-darkgreen">Manajemen Stok & Harga</h2>
       </div>
-
-      <!-- FORM TAMBAH/EDIT PRODUK TERMASUK UPLOAD FILE FOTO -->
-      <form onsubmit="handleSaveProduct(event)" class="bg-gray-50 p-4 rounded-xl border grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-        <input type="hidden" id="prodId">
-        
-        <div class="md:col-span-2">
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Nama Produk/Varian</label>
-          <input type="text" id="prodName" required placeholder="Contoh: Gabin Coklat Keju" class="w-full p-2 border rounded-lg text-xs">
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Harga (Rp)</label>
-          <input type="number" id="prodPrice" required placeholder="12000" class="w-full p-2 border rounded-lg text-xs">
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Jumlah Stok</label>
-          <input type="number" id="prodStock" required placeholder="20" class="w-full p-2 border rounded-lg text-xs">
-        </div>
-
-        <!-- UPLOAD FOTO DARI GALERI -->
-        <div class="md:col-span-2">
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Upload Foto Produk (Galeri HP/Laptop)</label>
-          <input type="file" id="prodFile" accept="image/*" class="w-full p-1.5 border bg-white rounded-lg text-xs">
-        </div>
-
-        <!-- URL FOTO CADANGAN -->
-        <div class="md:col-span-3">
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Atau Salin URL Foto (Opsional)</label>
-          <input type="url" id="prodImg" placeholder="https://..." class="w-full p-2 border rounded-lg text-xs">
-        </div>
-
-        <!-- DESKRIPSI PRODUK -->
-        <div class="md:col-span-2">
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Deskripsi Singkat Produk</label>
-          <input type="text" id="prodDesc" placeholder="Kutipan renyah dengan isian manis/gurih..." class="w-full p-2 border rounded-lg text-xs">
-        </div>
-
-        <div>
-          <button type="submit" id="btnSaveProd" class="w-full bg-brand-green hover:bg-brand-darkgreen text-white font-bold p-2.5 rounded-lg text-xs shadow transition">
-            <i class="fa-solid fa-plus mr-1"></i> Simpan Produk
-          </button>
-        </div>
-      </form>
-
-      <!-- TABEL DAFTAR PRODUK -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="bg-gray-100 border-b text-gray-600 font-bold uppercase">
-              <th class="p-3">Foto</th>
-              <th class="p-3">Nama Produk</th>
-              <th class="p-3">Harga</th>
-              <th class="p-3">Stok Saat Ini</th>
-              <th class="p-3 text-center">Aksi / Edit Produk</th>
-            </tr>
-          </thead>
-          <tbody id="productsTable" class="divide-y">
-            <tr><td colspan="5" class="p-4 text-center text-gray-400">Memuat daftar produk...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="sellerProductGrid"></div>
+    </section>
   </main>
 
   <script>
@@ -188,217 +112,125 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let audioEnabled = false;
-    let isInitialOrderLoad = true;
+    let allOrders = [];
+    let allProducts = [];
 
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
-
-    function playDingDongSound() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const playTone = (freq, start, duration) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
-          gain.gain.setValueAtTime(0.3, audioCtx.currentTime + start);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(audioCtx.currentTime + start);
-          osc.stop(audioCtx.currentTime + start + duration);
-        };
-        playTone(587.33, 0, 0.2);
-        playTone(880, 0.25, 0.4);
-      } catch (e) {
-        console.log("Audio konteks tidak diizinkan otomatis:", e);
-      }
-    }
-
-    function enableAudioAlert() {
-      playDingDongSound();
-      audioEnabled = true;
-      document.getElementById('soundStatus').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i> Suara & Notifikasi Aktif';
-      document.getElementById('soundStatus').className = 'text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1.5';
-      document.getElementById('btnEnableSound').className = 'bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5';
-      document.getElementById('btnEnableSound').innerHTML = '<i class="fa-solid fa-check"></i> Suara Aktif';
-    }
-
-    // --- 1. MONITOR DATA PESANAN (REALTIME) ---
+    // Real-time listener Orders
     db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-      const tbody = document.getElementById('ordersTable');
-      tbody.innerHTML = '';
-      let totalRev = 0;
-
-      document.getElementById('statOrders').innerText = snapshot.size;
-
-      if (snapshot.empty) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400 font-medium">Belum ada pesanan masuk saat ini.</td></tr>';
-      }
-
-      snapshot.docChanges().forEach(change => {
-        if (change.type === 'added' && !isInitialOrderLoad) {
-          const newOrder = change.doc.data();
-          if (audioEnabled) playDingDongSound();
-          if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("🔔 Pesanan Baru My Gabin!", {
-              body: `Dari: ${newOrder.custName}\nTotal: Rp ${(newOrder.totalPrice || 0).toLocaleString('id-ID')}`,
-              icon: "https://cdn-icons-png.flaticon.com/512/3144/3144456.png"
-            });
-          }
-        }
-      });
-
-      snapshot.forEach(doc => {
-        const o = doc.data();
-        const docId = doc.id;
-        totalRev += (o.totalPrice || 0);
-
-        const itemsStr = o.items ? o.items.map(i => `<span class="inline-block bg-emerald-50 text-brand-darkgreen border border-emerald-200 px-1.5 py-0.5 rounded text-[11px] font-semibold my-0.5">${i.name} (x${i.qty})</span>`).join(' ') : '-';
-        const mapsStr = o.custMaps ? `<a href="${o.custMaps}" target="_blank" class="text-blue-600 font-bold hover:underline"><i class="fa-solid fa-map-location-dot"></i> Buka Maps</a>` : '<span class="text-gray-400">Tanpa Maps</span>';
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-amber-50/40 transition">
-            <td class="p-3 font-medium"><strong>${o.id || docId}</strong><br><span class="text-gray-400 text-[10px]">${o.dateStr || ''}</span></td>
-            <td class="p-3"><strong>${o.custName || '-'}</strong><br><a href="https://wa.me/${o.custWA}" target="_blank" class="text-emerald-700 font-bold"><i class="fa-brands fa-whatsapp"></i> ${o.custWA || '-'}</a></td>
-            <td class="p-3">${itemsStr}</td>
-            <td class="p-3 font-semibold text-gray-700">${o.payMethod || 'Cash'}</td>
-            <td class="p-3 font-black text-brand-darkgreen">Rp ${(o.totalPrice || 0).toLocaleString('id-ID')}</td>
-            <td class="p-3">${mapsStr}<br><span class="text-gray-500 italic block mt-0.5">${o.custNotes || '-'}</span></td>
-            <td class="p-3">
-              <select onchange="updateOrderStatus('${docId}', this.value)" class="p-1 border rounded text-[11px] font-bold bg-white">
-                <option value="Menunggu Konfirmasi" ${o.status === 'Menunggu Konfirmasi' ? 'selected' : ''}>Menunggu</option>
-                <option value="Diproses" ${o.status === 'Diproses' ? 'selected' : ''}>Diproses</option>
-                <option value="Dalam Pengiriman" ${o.status === 'Dalam Pengiriman' ? 'selected' : ''}>Pengiriman</option>
-                <option value="Selesai" ${o.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
-                <option value="Dibatalkan" ${o.status === 'Dibatalkan' ? 'selected' : ''}>Batal</option>
-              </select>
-            </td>
-            <td class="p-3 text-center">
-              <button onclick="deleteOrder('${docId}')" class="text-red-500 hover:text-red-700 p-1" title="Hapus Pesanan">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-
-      document.getElementById('statRevenue').innerText = `Rp ${totalRev.toLocaleString('id-ID')}`;
-      isInitialOrderLoad = false;
+      allOrders = [];
+      snapshot.forEach(doc => allOrders.push({ docId: doc.id, ...doc.data() }));
+      renderOrdersUI();
+      updateStats();
     });
 
-    function updateOrderStatus(docId, newStatus) {
-      db.collection('orders').doc(docId).update({ status: newStatus });
-    }
-
-    function deleteOrder(docId) {
-      if (confirm('Yakin ingin menghapus catatan pesanan ini?')) {
-        db.collection('orders').doc(docId).delete();
-      }
-    }
-
-    // --- 2. KELOLA DATA PRODUK, STOK & UPLOAD FOTO ---
+    // Real-time listener Products
     db.collection('products').onSnapshot(snapshot => {
-      const tbody = document.getElementById('productsTable');
+      allProducts = [];
+      snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
+      renderSellerProductsUI();
+    });
+
+    function updateStats() {
+      document.getElementById('statTotalOrders').innerText = allOrders.length;
+      document.getElementById('statPendingOrders').innerText = allOrders.filter(o => o.status === 'Menunggu Konfirmasi').length;
+      document.getElementById('statCompletedOrders').innerText = allOrders.filter(o => o.status === 'Selesai').length;
+      
+      const rev = allOrders
+        .filter(o => o.status === 'Selesai')
+        .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+      document.getElementById('statRevenue').innerText = `Rp ${rev.toLocaleString('id-ID')}`;
+    }
+
+    function renderOrdersUI() {
+      const tbody = document.getElementById('ordersTableBody');
       tbody.innerHTML = '';
 
-      if (snapshot.empty) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">Belum ada varian produk. Silakan tambahkan di atas.</td></tr>';
+      if (allOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Belum ada pesanan masuk.</td></tr>';
+        return;
       }
 
-      snapshot.forEach(doc => {
-        const p = doc.data();
-        const pId = doc.id;
-        const defaultImg = 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=100&q=80';
-        const imgUrl = p.img || defaultImg;
-        const desc = p.desc || '';
+      allOrders.forEach(o => {
+        const itemsList = o.items.map(i => `${i.name} x${i.qty}`).join(', ');
+        const waLink = `https://wa.me/${o.custWA.replace(/^0/, '62')}?text=Halo%20${encodeURIComponent(o.custName)},%20terima%20kasih%20sudah%20memesan%20My%20Gabin!`;
 
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
-            <td class="p-3"><img src="${imgUrl}" class="w-12 h-12 object-cover rounded-lg border shadow-sm"></td>
-            <td class="p-3 font-bold text-gray-800">${p.name}<br><span class="text-gray-400 font-normal text-[10px]">${desc}</span></td>
-            <td class="p-3 font-semibold text-brand-darkgreen">Rp ${(p.price || 0).toLocaleString('id-ID')}</td>
-            <td class="p-3 font-black text-gray-700">${p.stock} porsi</td>
-            <td class="p-3 text-center space-x-1.5">
-              <button onclick="quickUpdateStock('${pId}', ${p.stock + 5})" class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded text-[10px] hover:bg-emerald-200">+5 Stok</button>
-              <button onclick="editProduct('${pId}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, ${p.stock}, '${imgUrl.replace(/'/g, "\\'")}', '${desc.replace(/'/g, "\\'")}')" class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded text-[10px] hover:bg-amber-200">Edit</button>
-              <button onclick="deleteProduct('${pId}')" class="bg-red-100 text-red-800 font-bold px-2 py-1 rounded text-[10px] hover:bg-red-200">Hapus</button>
+            <td class="p-3">
+              <div class="font-bold">${o.id || o.docId}</div>
+              <div class="text-[10px] text-gray-400">${o.dateStr || ''}</div>
+            </td>
+            <td class="p-3">
+              <div class="font-bold">${o.custName}</div>
+              <a href="${waLink}" target="_blank" class="text-emerald-600 hover:underline text-xs"><i class="fa-brands fa-whatsapp"></i> ${o.custWA}</a>
+              ${o.custMaps ? `<br><a href="${o.custMaps}" target="_blank" class="text-blue-500 underline text-[10px]">Lihat Lokasi Maps</a>` : ''}
+            </td>
+            <td class="p-3">
+              <div class="text-xs font-semibold">${itemsList}</div>
+              ${o.custNotes ? `<div class="text-[10px] text-amber-700 bg-amber-50 p-1 rounded mt-1">Catatan: ${o.custNotes}</div>` : ''}
+            </td>
+            <td class="p-3">
+              <div class="font-black text-brand-darkgreen">Rp ${(o.totalPrice || 0).toLocaleString('id-ID')}</div>
+              <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 border">${o.payMethod}</span>
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-1 rounded-full text-[10px] font-bold ${
+                o.status === 'Selesai' ? 'bg-emerald-100 text-emerald-800' :
+                o.status === 'Dibatalkan' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+              }">${o.status}</span>
+            </td>
+            <td class="p-3 text-center space-x-1">
+              <button onclick="updateOrderStatus('${o.docId}', 'Selesai')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs hover:bg-emerald-700">Selesai</button>
+              <button onclick="updateOrderStatus('${o.docId}', 'Dibatalkan')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">Batal</button>
             </td>
           </tr>
         `;
       });
-    });
+    }
 
-    // Helper konversi file gambar dari galeri ke Base64 URL
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+    function renderSellerProductsUI() {
+      const grid = document.getElementById('sellerProductGrid');
+      grid.innerHTML = '';
+
+      allProducts.forEach(p => {
+        grid.innerHTML += `
+          <div class="bg-gray-50 border rounded-xl p-3 flex items-center gap-3">
+            <img src="${p.img}" class="w-16 h-16 object-cover rounded-lg">
+            <div class="flex-1 space-y-1">
+              <div class="font-bold text-sm">${p.name}</div>
+              <div class="text-xs text-gray-500">Harga: Rp ${(p.price || 0).toLocaleString('id-ID')}</div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold">Stok:</span>
+                <input type="number" id="stockInput_${p.id}" value="${p.stock}" class="w-16 border rounded px-1.5 py-0.5 text-xs font-bold text-center">
+                <button onclick="saveStock('${p.id}')" class="bg-brand-green text-white px-2 py-0.5 rounded text-xs font-bold hover:bg-brand-darkgreen">Simpan</button>
+              </div>
+            </div>
+          </div>
+        `;
       });
     }
 
-    async function handleSaveProduct(e) {
-      e.preventDefault();
-      const id = document.getElementById('prodId').value;
-      const name = document.getElementById('prodName').value;
-      const price = parseInt(document.getElementById('prodPrice').value);
-      const stock = parseInt(document.getElementById('prodStock').value);
-      const desc = document.getElementById('prodDesc').value;
-      let img = document.getElementById('prodImg').value.trim();
-      const fileInput = document.getElementById('prodFile');
+    async function updateOrderStatus(docId, status) {
+      await db.collection('orders').doc(docId).update({ status });
+    }
 
-      // Jika penjual memilih file dari galeri HP/Laptop
-      if (fileInput.files && fileInput.files[0]) {
-        try {
-          img = await fileToBase64(fileInput.files[0]);
-        } catch (err) {
-          alert("Gagal membaca file foto dari galeri!");
-        }
-      }
+    async function saveStock(id) {
+      const newStock = parseInt(document.getElementById(`stockInput_${id}`).value) || 0;
+      await db.collection('products').doc(id).update({ stock: newStock });
+      alert('Stok berhasil diperbarui!');
+    }
 
-      if (!img) {
-        img = 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=500&q=80';
-      }
-
-      const data = { name, price, stock, img, desc };
-
-      if (id) {
-        await db.collection('products').doc(id).update(data);
+    function switchTab(tab) {
+      if (tab === 'orders') {
+        document.getElementById('sectionOrders').classList.remove('hidden');
+        document.getElementById('sectionProducts').classList.add('hidden');
+        document.getElementById('tabBtnOrders').className = 'py-2.5 px-5 font-bold text-sm border-b-2 border-brand-green text-brand-green';
+        document.getElementById('tabBtnProducts').className = 'py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green';
       } else {
-        await db.collection('products').add(data);
-      }
-
-      document.getElementById('prodId').value = '';
-      document.getElementById('prodName').value = '';
-      document.getElementById('prodPrice').value = '';
-      document.getElementById('prodStock').value = '';
-      document.getElementById('prodImg').value = '';
-      document.getElementById('prodDesc').value = '';
-      document.getElementById('prodFile').value = '';
-      document.getElementById('btnSaveProd').innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Simpan Produk';
-    }
-
-    function editProduct(id, name, price, stock, img, desc) {
-      document.getElementById('prodId').value = id;
-      document.getElementById('prodName').value = name;
-      document.getElementById('prodPrice').value = price;
-      document.getElementById('prodStock').value = stock;
-      document.getElementById('prodImg').value = img || '';
-      document.getElementById('prodDesc').value = desc || '';
-      document.getElementById('btnSaveProd').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Update Produk';
-    }
-
-    function quickUpdateStock(id, newStock) {
-      db.collection('products').doc(id).update({ stock: newStock });
-    }
-
-    function deleteProduct(id) {
-      if (confirm('Yakin ingin menghapus varian produk ini?')) {
-        db.collection('products').doc(id).delete();
+        document.getElementById('sectionOrders').classList.add('hidden');
+        document.getElementById('sectionProducts').classList.remove('hidden');
+        document.getElementById('tabBtnOrders').className = 'py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green';
+        document.getElementById('tabBtnProducts').className = 'py-2.5 px-5 font-bold text-sm border-b-2 border-brand-green text-brand-green';
       }
     }
   </script>
