@@ -10,8 +10,9 @@
   <!-- Firebase SDK (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
-  <!-- HTML2Canvas Library untuk Mengubah Struk/Nota ke Gambar -->
+  <!-- HTML2Canvas Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
@@ -31,6 +32,8 @@
       #printableReceipt, #printableReceipt * { visibility: visible; }
       #printableReceipt { position: absolute; left: 0; top: 0; width: 100%; }
     }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="bg-brand-cream text-gray-800 font-sans min-h-screen flex flex-col relative">
@@ -73,10 +76,15 @@
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-gray-400"></i>
       </div>
 
-      <div class="flex items-center gap-3">
-        <!-- FITUR CEK STATUS PESANAN -->
+      <div class="flex items-center gap-2 md:gap-3">
+        <!-- TOMBOL CEK PESANAN -->
         <button onclick="openTrackModal()" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-truck-fast text-amber-300"></i> Cek Pesanan
+          <i class="fa-solid fa-truck-fast text-amber-300"></i> <span class="hidden md:inline">Cek Pesanan</span>
+        </button>
+
+        <!-- TOMBOL AKUN PEMBELI -->
+        <button onclick="openUserModal()" id="userAuthBtn" class="text-xs bg-amber-500 hover:bg-amber-400 text-brand-darkgreen px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition shadow">
+          <i class="fa-solid fa-user"></i> <span id="userAuthBtnText" class="hidden md:inline">Masuk / Akun</span>
         </button>
 
         <!-- TOMBOL KERANJANG -->
@@ -103,12 +111,13 @@
       </div>
     </div>
 
-    <!-- FILTER KATEGORI/BADGE -->
+    <!-- FILTER KATEGORI/BADGE & WISHLIST -->
     <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-2 no-scrollbar">
       <button onclick="filterCategory('ALL')" class="badge-btn active border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white">Semua Varian</button>
       <button onclick="filterCategory('Terlaris')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🔥 Terlaris</button>
       <button onclick="filterCategory('Hemat')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🏷️ Paket Hemat</button>
       <button onclick="filterCategory('Baru')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">✨ Varian Baru</button>
+      <button onclick="filterCategory('WISHLIST')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-pink-600 hover:bg-pink-50 border-pink-200">❤️ Wishlist Saya</button>
     </div>
 
     <!-- KATALOG MENU -->
@@ -140,6 +149,113 @@
     </div>
   </div>
 
+  <!-- MODAL AKUN / LOGIN / REGISTRASI / PROFIL PEMBELI -->
+  <div id="userModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border p-6 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="userModalTitle" class="font-bold text-lg text-brand-darkgreen">Akun Pembeli</h3>
+        <button onclick="closeUserModal()" class="text-gray-500 text-xl">&times;</button>
+      </div>
+
+      <!-- FORMS UNTUK BELUM LOGIN -->
+      <div id="loggedOutView" class="space-y-4">
+        <!-- TAB TOGGLE LOGIN / DAFTAR -->
+        <div class="flex border-b">
+          <button onclick="switchAuthTab('login')" id="tabBtnLogin" class="flex-1 py-2 font-bold text-xs border-b-2 border-brand-green text-brand-green">Masuk</button>
+          <button onclick="switchAuthTab('register')" id="tabBtnRegister" class="flex-1 py-2 font-bold text-xs text-gray-400">Daftar Akun Baru</button>
+        </div>
+
+        <!-- FORM LOGIN -->
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Email</label>
+            <input type="email" id="loginEmail" required placeholder="nama@gmail.com" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Password</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <button type="submit" id="btnLoginSubmit" class="w-full bg-brand-green hover:bg-brand-darkgreen text-white font-bold py-3 rounded-xl shadow text-xs">
+            Masuk Ke Akun
+          </button>
+        </form>
+
+        <!-- FORM REGISTRASI -->
+        <form id="registerForm" onsubmit="handleRegister(event)" class="hidden space-y-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Nama Lengkap *</label>
+            <input type="text" id="regName" required placeholder="Contoh: Fitrotun Nisa" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Nomor WhatsApp *</label>
+            <input type="tel" id="regPhone" required placeholder="Contoh: 085936618342" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Email *</label>
+            <input type="email" id="regEmail" required placeholder="nama@gmail.com" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Password (Min. 6 Karakter) *</label>
+            <input type="password" id="regPassword" minlength="6" required placeholder="••••••••" class="w-full border p-2.5 text-sm rounded-lg">
+          </div>
+          <button type="submit" id="btnRegisterSubmit" class="w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold py-3 rounded-xl shadow text-xs">
+            Buat Akun Sekarang
+          </button>
+        </form>
+      </div>
+
+      <!-- DASHBOARD SETELAH LOGIN -->
+      <div id="loggedInView" class="hidden space-y-4">
+        <!-- PROFILE CARD WITH REWARD POINTS -->
+        <div class="bg-gradient-to-r from-emerald-800 to-brand-green text-white p-4 rounded-xl flex items-center justify-between shadow">
+          <div>
+            <div id="userProfileName" class="font-black text-base">Nama Pembeli</div>
+            <div id="userProfileEmail" class="text-xs text-emerald-200">email@domain.com</div>
+            <div id="userProfilePhone" class="text-xs text-amber-300 font-bold mt-1">WA: -</div>
+          </div>
+          <div class="bg-amber-400 text-brand-darkgreen p-3 rounded-xl text-center shadow border border-amber-200">
+            <div class="text-[10px] font-bold uppercase">Gabin Poin</div>
+            <div id="userPoints" class="text-xl font-black leading-tight">0</div>
+            <div class="text-[9px] font-semibold">Reward</div>
+          </div>
+        </div>
+
+        <!-- TAB AKUN PEMBELI -->
+        <div class="flex border-b text-xs font-bold">
+          <button onclick="switchProfileTab('orders')" id="pTabBtnOrders" class="flex-1 py-2 border-b-2 border-brand-green text-brand-green">Riwayat Pesanan</button>
+          <button onclick="switchProfileTab('addresses')" id="pTabBtnAddresses" class="flex-1 py-2 text-gray-400">Alamat Favorit</button>
+          <button onclick="switchProfileTab('wishlist')" id="pTabBtnWishlist" class="flex-1 py-2 text-gray-400">Wishlist (<span id="wishlistCount">0</span>)</button>
+        </div>
+
+        <!-- TAB RIWAYAT PESANAN -->
+        <div id="pTabOrders" class="space-y-3">
+          <div id="userOrdersList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- TAB ALAMAT FAVORIT -->
+        <div id="pTabAddresses" class="hidden space-y-3">
+          <form onsubmit="handleSaveAddress(event)" class="space-y-2 border p-3 rounded-xl bg-gray-50">
+            <div class="text-xs font-bold text-brand-darkgreen">+ Tambah Alamat Baru</div>
+            <input type="text" id="addrLabel" required placeholder="Label Alamat (Contoh: Rumah / Kantor)" class="w-full border p-2 text-xs rounded-lg">
+            <input type="url" id="addrMaps" placeholder="Link Google Maps (Opsional)" class="w-full border p-2 text-xs rounded-lg">
+            <textarea id="addrDetail" required rows="2" placeholder="Detail Alamat & Petunjuk Lokasi" class="w-full border p-2 text-xs rounded-lg"></textarea>
+            <button type="submit" class="bg-brand-green hover:bg-brand-darkgreen text-white font-bold py-2 px-3 rounded-lg text-xs">Simpan Alamat</button>
+          </form>
+          <div id="savedAddressesList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+        </div>
+
+        <!-- TAB WISHLIST -->
+        <div id="pTabWishlist" class="hidden space-y-2">
+          <div id="wishlistGrid" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"></div>
+        </div>
+
+        <button onclick="handleLogout()" class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 rounded-xl text-xs transition">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar / Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL CHECKOUT -->
   <div id="checkoutModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border my-8 p-6 space-y-4">
@@ -147,6 +263,15 @@
         <h3 class="font-bold text-lg text-brand-darkgreen">Format Pemesanan My Gabin</h3>
         <button onclick="closeCheckoutModal()" class="text-gray-500 text-xl">&times;</button>
       </div>
+      
+      <!-- PILIH ALAMAT FAVORIT JIKA LOGIN -->
+      <div id="savedAddressSelectorBox" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-1">
+        <label class="block text-xs font-bold text-brand-darkgreen">Gunakan Alamat Tersimpan:</label>
+        <select id="savedAddressSelect" onchange="applySavedAddressToForm()" class="w-full border p-2 text-xs rounded-lg bg-white">
+          <option value="">-- Pilih Alamat Favorit --</option>
+        </select>
+      </div>
+
       <form onsubmit="handleCheckoutSubmit(event)" class="space-y-3">
         <div>
           <label class="block text-xs font-bold mb-1">Nama Pemesan *</label>
@@ -224,7 +349,6 @@
       <h3 class="font-black text-xl text-brand-darkgreen">Pesanan Berhasil Disimpan!</h3>
       <p class="text-xs text-gray-500">Kode Pesanan Anda: <strong id="createdOrderId" class="text-amber-600"></strong></p>
 
-      <!-- INFORMASI LANGKAH KIRIM GAMBAR STRUK KE PEMBELI -->
       <div class="bg-amber-50 border border-amber-300 p-3 rounded-xl text-left text-xs space-y-1.5 text-amber-900 shadow-sm">
         <div class="font-bold flex items-center gap-1.5 text-amber-800">
           <i class="fa-solid fa-circle-info text-amber-600 text-sm"></i> Petunjuk Pengiriman Struk:
@@ -247,7 +371,6 @@
       </div>
 
       <div class="space-y-2 pt-2">
-        <!-- TOMBOL KIRIM STRUK GAMBAR VIA WA -->
         <button onclick="sendReceiptAsImageToWA()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow text-xs flex items-center justify-center gap-2">
           <i class="fa-brands fa-whatsapp text-lg"></i> Kirim Struk Gambar ke WA Penjual
         </button>
@@ -275,6 +398,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     const defaultProducts = [
       { id: "1", name: 'Coklat Cips', price: 12000, stock: 25, rating: '4.8', img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=500&q=80', badge: 'Terlaris' },
@@ -291,6 +415,48 @@
     let payProofBase64 = '';
     let selectedCategory = 'ALL';
     let currentReceiptImageBase64 = '';
+
+    // USER DATA
+    let currentUser = null;
+    let userProfileData = null;
+    let wishlist = [];
+
+    // LISTEN AUTH STATE
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+      const authBtnText = document.getElementById('userAuthBtnText');
+      if (user) {
+        authBtnText.innerText = "Profil Saya";
+        await fetchUserProfile(user.uid);
+        listenUserWishlist(user.uid);
+      } else {
+        authBtnText.innerText = "Masuk / Akun";
+        userProfileData = null;
+        wishlist = [];
+        updateWishlistCount();
+      }
+      renderProductsUI();
+    });
+
+    async function fetchUserProfile(uid) {
+      const doc = await db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        userProfileData = doc.data();
+      }
+    }
+
+    function listenUserWishlist(uid) {
+      db.collection('users').doc(uid).collection('wishlist').onSnapshot(snap => {
+        wishlist = [];
+        snap.forEach(doc => wishlist.push(doc.id));
+        updateWishlistCount();
+        if (selectedCategory === 'WISHLIST') renderProductsUI();
+      });
+    }
+
+    function updateWishlistCount() {
+      document.getElementById('wishlistCount').innerText = wishlist.length;
+    }
 
     db.collection('products').onSnapshot(snapshot => {
       if (snapshot.empty) {
@@ -318,23 +484,33 @@
 
       const filtered = products.filter(p => {
         const matchName = p.name.toLowerCase().includes(query);
-        const matchCat = selectedCategory === 'ALL' || (p.badge && p.badge.toLowerCase().includes(selectedCategory.toLowerCase()));
+        let matchCat = true;
+        if (selectedCategory === 'WISHLIST') {
+          matchCat = wishlist.includes(p.id);
+        } else if (selectedCategory !== 'ALL') {
+          matchCat = p.badge && p.badge.toLowerCase().includes(selectedCategory.toLowerCase());
+        }
         return matchName && matchCat;
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">Tidak ada varian produk yang sesuai.</div>';
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">${selectedCategory === 'WISHLIST' ? 'Belum ada produk favorit di wishlist Anda.' : 'Tidak ada varian produk yang sesuai.'}</div>`;
         return;
       }
 
       filtered.forEach(p => {
         const isOutOfStock = p.stock <= 0;
+        const isFav = wishlist.includes(p.id);
+
         grid.innerHTML += `
-          <div class="bg-white rounded-2xl border shadow hover:shadow-xl transition overflow-hidden flex flex-col justify-between">
+          <div class="bg-white rounded-2xl border shadow hover:shadow-xl transition overflow-hidden flex flex-col justify-between relative">
             <div>
               <div class="relative aspect-square overflow-hidden bg-gray-100">
                 <img src="${p.img}" class="w-full h-full object-cover">
                 ${p.badge ? `<span class="absolute top-2 left-2 bg-amber-500 text-brand-darkgreen font-black text-[10px] px-2 py-0.5 rounded-full">${p.badge}</span>` : ''}
+                <button onclick="toggleWishlist('${p.id}')" class="absolute top-2 right-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-full text-xs transition shadow hover:bg-white">
+                  <i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-gray-600'} fa-heart"></i>
+                </button>
                 <span class="absolute bottom-2 right-2 bg-black/60 text-white text-xs font-bold px-2 py-0.5 rounded-lg">Stok: ${p.stock}</span>
               </div>
               <div class="p-4">
@@ -350,6 +526,23 @@
           </div>
         `;
       });
+    }
+
+    async function toggleWishlist(productId) {
+      if (!currentUser) {
+        alert('Silakan login terlebih dahulu untuk menyimpan produk ke Wishlist favorit!');
+        openUserModal();
+        return;
+      }
+
+      const ref = db.collection('users').doc(currentUser.uid).collection('wishlist').doc(productId);
+      if (wishlist.includes(productId)) {
+        await ref.delete();
+        showToast('Dihapus dari Wishlist');
+      } else {
+        await ref.set({ addedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        showToast('Disimpan ke Wishlist');
+      }
     }
 
     function showToast(message) {
@@ -431,15 +624,255 @@
     }
 
     function toggleCartDrawer() { document.getElementById('cartDrawer').classList.toggle('translate-x-full'); }
+    
     function openCheckoutModal() { 
       if(cart.length === 0) return alert('Keranjang belanjaan Anda masih kosong!');
       toggleCartDrawer(); 
+      
+      // Auto-fill jika login
+      if (currentUser && userProfileData) {
+        document.getElementById('custName').value = userProfileData.name || '';
+        document.getElementById('custWA').value = userProfileData.phone || '';
+        loadSavedAddressesDropdown();
+      }
+
       document.getElementById('checkoutModal').classList.remove('hidden'); 
     }
+    
     function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
-
     function openTrackModal() { document.getElementById('trackModal').classList.remove('hidden'); }
     function closeTrackModal() { document.getElementById('trackModal').classList.add('hidden'); }
+
+    // AUTH & USER PROFILE MODAL FUNCTIONS
+    function openUserModal() {
+      const loggedOutView = document.getElementById('loggedOutView');
+      const loggedInView = document.getElementById('loggedInView');
+
+      if (currentUser) {
+        loggedOutView.classList.add('hidden');
+        loggedInView.classList.remove('hidden');
+        
+        // Render profil
+        document.getElementById('userProfileName').innerText = userProfileData?.name || 'Pembeli My Gabin';
+        document.getElementById('userProfileEmail').innerText = currentUser.email;
+        document.getElementById('userProfilePhone').innerText = `WA: ${userProfileData?.phone || '-'}`;
+        document.getElementById('userPoints').innerText = userProfileData?.points || 0;
+
+        loadUserOrdersHistory();
+        loadSavedAddresses();
+        renderWishlistTabUI();
+      } else {
+        loggedOutView.classList.remove('hidden');
+        loggedInView.classList.add('hidden');
+      }
+
+      document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
+
+    function switchAuthTab(tab) {
+      if (tab === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('tabBtnLogin').className = 'flex-1 py-2 font-bold text-xs border-b-2 border-brand-green text-brand-green';
+        document.getElementById('tabBtnRegister').className = 'flex-1 py-2 font-bold text-xs text-gray-400';
+      } else {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('tabBtnLogin').className = 'flex-1 py-2 font-bold text-xs text-gray-400';
+        document.getElementById('tabBtnRegister').className = 'flex-1 py-2 font-bold text-xs border-b-2 border-brand-green text-brand-green';
+      }
+    }
+
+    function switchProfileTab(tab) {
+      const btnOrders = document.getElementById('pTabBtnOrders');
+      const btnAddresses = document.getElementById('pTabBtnAddresses');
+      const btnWishlist = document.getElementById('pTabBtnWishlist');
+
+      document.getElementById('pTabOrders').classList.toggle('hidden', tab !== 'orders');
+      document.getElementById('pTabAddresses').classList.toggle('hidden', tab !== 'addresses');
+      document.getElementById('pTabWishlist').classList.toggle('hidden', tab !== 'wishlist');
+
+      btnOrders.className = tab === 'orders' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
+      btnAddresses.className = tab === 'addresses' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
+      btnWishlist.className = tab === 'wishlist' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const pass = document.getElementById('loginPassword').value;
+      
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        alert('Berhasil masuk!');
+        openUserModal();
+      } catch (err) {
+        alert('Gagal masuk: ' + err.message);
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const phone = document.getElementById('regPhone').value;
+      const email = document.getElementById('regEmail').value;
+      const pass = document.getElementById('regPassword').value;
+
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        await db.collection('users').doc(cred.user.uid).set({
+          name: name,
+          phone: phone,
+          email: email,
+          points: 0,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert('Pendaftaran akun berhasil!');
+        openUserModal();
+      } catch (err) {
+        alert('Gagal pendaftaran: ' + err.message);
+      }
+    }
+
+    function handleLogout() {
+      auth.signOut();
+      alert('Anda telah keluar.');
+      closeUserModal();
+    }
+
+    // RIWAYAT PESANAN PEMBELI
+    async function loadUserOrdersHistory() {
+      const container = document.getElementById('userOrdersList');
+      container.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Memuat riwayat...</div>';
+
+      const snap = await db.collection('orders').where('userId', '==', currentUser.uid).get();
+      container.innerHTML = '';
+
+      if (snap.empty) {
+        container.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Belum ada riwayat pesanan.</div>';
+        return;
+      }
+
+      snap.forEach(doc => {
+        const o = doc.data();
+        container.innerHTML += `
+          <div class="border p-3 rounded-xl bg-gray-50 text-xs space-y-1">
+            <div class="flex justify-between font-bold">
+              <span class="text-brand-darkgreen">${o.id}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800">${o.status}</span>
+            </div>
+            <div class="text-[10px] text-gray-400">${o.dateStr}</div>
+            <div class="font-black text-brand-darkgreen">Rp ${(o.totalPrice || 0).toLocaleString('id-ID')}</div>
+          </div>
+        `;
+      });
+    }
+
+    // ALAMAT FAVORIT PEMBELI
+    async function handleSaveAddress(e) {
+      e.preventDefault();
+      const label = document.getElementById('addrLabel').value;
+      const maps = document.getElementById('addrMaps').value;
+      const detail = document.getElementById('addrDetail').value;
+
+      await db.collection('users').doc(currentUser.uid).collection('addresses').add({
+        label, maps, detail, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      document.getElementById('addrLabel').value = '';
+      document.getElementById('addrMaps').value = '';
+      document.getElementById('addrDetail').value = '';
+      alert('Alamat favorit disimpan!');
+      loadSavedAddresses();
+    }
+
+    async function loadSavedAddresses() {
+      const container = document.getElementById('savedAddressesList');
+      container.innerHTML = '';
+
+      const snap = await db.collection('users').doc(currentUser.uid).collection('addresses').get();
+      if (snap.empty) {
+        container.innerHTML = '<div class="text-center text-xs text-gray-400 py-2">Belum ada alamat tersimpan.</div>';
+        return;
+      }
+
+      snap.forEach(doc => {
+        const a = doc.data();
+        container.innerHTML += `
+          <div class="border p-2.5 rounded-xl bg-white text-xs flex justify-between items-start">
+            <div>
+              <div class="font-bold text-brand-darkgreen">${a.label}</div>
+              <div class="text-gray-600 text-[11px]">${a.detail}</div>
+              ${a.maps ? `<a href="${a.maps}" target="_blank" class="text-blue-500 text-[10px] underline">Lihat Maps</a>` : ''}
+            </div>
+            <button onclick="deleteSavedAddress('${doc.id}')" class="text-red-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+      });
+    }
+
+    async function deleteSavedAddress(id) {
+      await db.collection('users').doc(currentUser.uid).collection('addresses').doc(id).delete();
+      loadSavedAddresses();
+    }
+
+    async function loadSavedAddressesDropdown() {
+      const box = document.getElementById('savedAddressSelectorBox');
+      const select = document.getElementById('savedAddressSelect');
+
+      const snap = await db.collection('users').doc(currentUser.uid).collection('addresses').get();
+      if (snap.empty) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      box.classList.remove('hidden');
+      select.innerHTML = '<option value="">-- Pilih Alamat Favorit --</option>';
+
+      snap.forEach(doc => {
+        const a = doc.data();
+        select.innerHTML += `<option value="${doc.id}">${a.label} - ${a.detail.slice(0,25)}...</option>`;
+      });
+    }
+
+    async function applySavedAddressToForm() {
+      const addrId = document.getElementById('savedAddressSelect').value;
+      if (!addrId) return;
+
+      const doc = await db.collection('users').doc(currentUser.uid).collection('addresses').doc(addrId).get();
+      if (doc.exists) {
+        const a = doc.data();
+        document.getElementById('custMaps').value = a.maps || '';
+        document.getElementById('custNotes').value = `${a.label}: ${a.detail}`;
+      }
+    }
+
+    // WISHLIST TAB IN PROFILE
+    function renderWishlistTabUI() {
+      const grid = document.getElementById('wishlistGrid');
+      grid.innerHTML = '';
+
+      const favProds = products.filter(p => wishlist.includes(p.id));
+      if (favProds.length === 0) {
+        grid.innerHTML = '<div class="col-span-2 text-center text-xs text-gray-400 py-4">Belum ada wishlist.</div>';
+        return;
+      }
+
+      favProds.forEach(p => {
+        grid.innerHTML += `
+          <div class="border p-2 rounded-xl bg-white flex items-center gap-2">
+            <img src="${p.img}" class="w-10 h-10 object-cover rounded-lg">
+            <div class="flex-1 overflow-hidden">
+              <div class="font-bold text-xs truncate">${p.name}</div>
+              <div class="text-[10px] font-black text-brand-darkgreen">Rp ${(p.price || 0).toLocaleString('id-ID')}</div>
+            </div>
+            <button onclick="addToCart('${p.id}')" class="bg-brand-green text-white p-1.5 rounded-lg text-xs"><i class="fa-solid fa-cart-plus"></i></button>
+          </div>
+        `;
+      });
+    }
 
     async function searchOrderStatus() {
       const code = document.getElementById('trackOrderIdInput').value.trim().toUpperCase();
@@ -508,7 +941,6 @@
       const custNotes = document.getElementById('custNotes').value;
       const totalPrice = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
 
-      // ISI STRUK HTML DULU UNTUK KEMUDIAN DIKONVERSI KE GAMBAR
       let itemsStr = '';
       cart.forEach(i => {
         itemsStr += `<div class="flex justify-between"><span>${i.name} x${i.qty}</span><span>Rp ${(i.price*i.qty).toLocaleString('id-ID')}</span></div>`;
@@ -525,7 +957,6 @@
         <div class="flex justify-between font-bold text-sm"><span>TOTAL:</span><span>Rp ${totalPrice.toLocaleString('id-ID')}</span></div>
       `;
 
-      // GENERATE GAMBAR DARI NOTA SEBELUM DIKIRIM
       const receiptElem = document.getElementById('printableReceipt');
       const canvas = await html2canvas(receiptElem, { scale: 2 });
       currentReceiptImageBase64 = canvas.toDataURL('image/png');
@@ -534,6 +965,7 @@
         id: newId,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         dateStr: new Date().toLocaleString('id-ID'),
+        userId: currentUser ? currentUser.uid : null,
         custName: custName,
         custWA: custWA,
         custMaps: document.getElementById('custMaps').value,
@@ -548,6 +980,14 @@
 
       try {
         await db.collection('orders').add(orderData);
+
+        // Tambah poin pengguna jika login (1 Poin tiap Rp 10.000)
+        if (currentUser) {
+          const earnedPoints = Math.floor(totalPrice / 10000);
+          await db.collection('users').doc(currentUser.uid).update({
+            points: firebase.firestore.FieldValue.increment(earnedPoints)
+          });
+        }
 
         for (let item of cart) {
           const prod = products.find(p => p.id === item.id);
@@ -566,7 +1006,6 @@
       }
     }
 
-    // FUNGSI MENGUNDUH GAMBAR STRUK & MEMBUKA WA PENJUAL
     function sendReceiptAsImageToWA() {
       if (currentReceiptImageBase64) {
         const a = document.createElement('a');
