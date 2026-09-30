@@ -224,11 +224,24 @@
       <h3 class="font-black text-xl text-brand-darkgreen">Pesanan Berhasil Disimpan!</h3>
       <p class="text-xs text-gray-500">Kode Pesanan Anda: <strong id="createdOrderId" class="text-amber-600"></strong></p>
 
+      <!-- INFORMASI LANGKAH KIRIM GAMBAR STRUK KE PEMBELI -->
+      <div class="bg-amber-50 border border-amber-300 p-3 rounded-xl text-left text-xs space-y-1.5 text-amber-900 shadow-sm">
+        <div class="font-bold flex items-center gap-1.5 text-amber-800">
+          <i class="fa-solid fa-circle-info text-amber-600 text-sm"></i> Petunjuk Pengiriman Struk:
+        </div>
+        <ol class="list-decimal list-inside space-y-1 text-[11px] font-medium leading-tight">
+          <li>Klik tombol hijau <strong>"Kirim Struk Gambar ke WA Penjual"</strong> di bawah.</li>
+          <li>File gambar struk akan <strong>otomatis tersimpan</strong> di galeri/folder Download HP Anda.</li>
+          <li>Aplikasi WhatsApp akan terbuka otomatis membawa teks pesan.</li>
+          <li>Di obrolan WhatsApp, klik ikon <strong>klip/kamera (lampiran)</strong>, pilih gambar struk yang baru terunduh tadi, lalu kirimkan.</li>
+        </ol>
+      </div>
+
       <!-- ELEMEN STRUK DIGITAL UNTUK DIKONVERSI MENJADI GAMBAR -->
       <div id="printableReceipt" class="border rounded-xl p-4 bg-white text-left text-xs space-y-2 font-mono border-dashed border-amber-400 shadow-sm">
         <div class="text-center font-bold text-brand-darkgreen border-b border-amber-300 pb-2">
           🍦 MY GABIN BANGKALAN 🍦<br>
-          <span class="text-[10px] font-normal text-gray-500">Nota Bukti Pemesanan Resmionline</span>
+          <span class="text-[10px] font-normal text-gray-500">Nota Bukti Pemesanan Resmi Online</span>
         </div>
         <div id="receiptContent"></div>
       </div>
