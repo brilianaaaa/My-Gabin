@@ -11,7 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-  <!-- HTML2Canvas Library untuk Mengubah Struk Nota ke Gambar -->
+  <!-- HTML2Canvas Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
@@ -90,9 +90,6 @@
         <button onclick="exportOrdersToCSV()" class="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow">
           <i class="fa-solid fa-file-excel"></i> Ekspor CSV Terpisah Kolom
         </button>
-        <button onclick="syncToGoogleSheets()" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow">
-          <i class="fa-solid fa-arrows-rotate"></i> Sync Auto Google Sheets
-        </button>
       </div>
     </div>
 
@@ -102,6 +99,13 @@
         <h2 class="font-black text-lg text-brand-darkgreen">Daftar Pesanan Masuk</h2>
         
         <div class="flex flex-wrap items-center gap-2">
+          <!-- FILTER TANGGAL PESANAN -->
+          <div class="flex items-center gap-1 bg-gray-50 border rounded-xl px-2 py-1">
+            <span class="text-xs font-bold text-gray-500"><i class="fa-solid fa-calendar-days text-brand-green"></i> Tanggal:</span>
+            <input type="date" id="orderDateFilter" onchange="renderOrdersUI()" class="bg-transparent text-xs font-bold focus:outline-none">
+            <button onclick="resetDateFilter()" title="Tampilkan Semua Tanggal" class="text-xs text-gray-400 hover:text-red-500 font-bold px-1">&times;</button>
+          </div>
+
           <input type="text" id="orderSearchInput" oninput="renderOrdersUI()" placeholder="Cari nama / ID..." class="border rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-green">
           <select id="orderStatusFilter" onchange="renderOrdersUI()" class="border rounded-xl px-3 py-1.5 text-xs font-semibold bg-gray-50">
             <option value="ALL">Semua Status</option>
@@ -122,7 +126,7 @@
               <th class="p-3">Detail Pesanan</th>
               <th class="p-3">Total & Pembayaran</th>
               <th class="p-3">Status</th>
-              <th class="p-3 text-center">Aksi & Struk Gambar</th>
+              <th class="p-3 text-center">Aksi & Struk</th>
             </tr>
           </thead>
           <tbody id="ordersTableBody" class="divide-y"></tbody>
@@ -141,15 +145,6 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="sellerProductGrid"></div>
     </section>
   </main>
-
-  <!-- ELEMEN TERSEMBUNYI UNTUK RENDERING NOTA MENJADI GAMBAR DI PORTAL PENJUAL -->
-  <div id="hiddenReceiptContainer" class="fixed -left-[9999px] top-0 bg-white p-6 border rounded-xl w-[350px] font-mono text-xs space-y-2 border-dashed border-amber-400">
-    <div class="text-center font-bold text-brand-darkgreen border-b border-amber-300 pb-2">
-      🍦 MY GABIN BANGKALAN 🍦<br>
-      <span class="text-[10px] font-normal text-gray-500">Nota Resmi Penjual</span>
-    </div>
-    <div id="hiddenReceiptContent"></div>
-  </div>
 
   <!-- MODAL DETAIL BUKTI BAYAR -->
   <div id="proofModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
@@ -254,12 +249,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const GOOGLE_SHEETS_WEBHOOK_URL = ''; 
-
     let allOrders = [];
     let allProducts = [];
     let currentBase64Image = '';
     let initialLoad = true;
+
+    // Set Default Filter Tanggal ke Hari Ini
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('orderDateFilter').value = today;
+    });
 
     db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
       const isNewOrder = !initialLoad && snapshot.docChanges().some(change => change.type === 'added');
@@ -270,7 +269,6 @@
       allOrders = [];
       snapshot.forEach(doc => allOrders.push({ docId: doc.id, ...doc.data() }));
       renderOrdersUI();
-      updateStats();
       initialLoad = false;
     });
 
@@ -303,32 +301,49 @@
       }
     }
 
-    function updateStats() {
-      document.getElementById('statTotalOrders').innerText = allOrders.length;
-      document.getElementById('statPendingOrders').innerText = allOrders.filter(o => o.status === 'Menunggu Konfirmasi').length;
-      document.getElementById('statCompletedOrders').innerText = allOrders.filter(o => o.status === 'Selesai').length;
+    function updateStats(filteredList) {
+      // Ringkasan dihitung dari data yang telah difilter tanggalnya
+      document.getElementById('statTotalOrders').innerText = filteredList.length;
+      document.getElementById('statPendingOrders').innerText = filteredList.filter(o => o.status === 'Menunggu Konfirmasi').length;
+      document.getElementById('statCompletedOrders').innerText = filteredList.filter(o => o.status === 'Selesai').length;
       
-      const rev = allOrders
+      const rev = filteredList
         .filter(o => o.status === 'Selesai')
         .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
       document.getElementById('statRevenue').innerText = `Rp ${rev.toLocaleString('id-ID')}`;
+    }
+
+    function resetDateFilter() {
+      document.getElementById('orderDateFilter').value = '';
+      renderOrdersUI();
     }
 
     function renderOrdersUI() {
       const tbody = document.getElementById('ordersTableBody');
       const searchQuery = (document.getElementById('orderSearchInput')?.value || '').toLowerCase();
       const statusFilter = document.getElementById('orderStatusFilter')?.value || 'ALL';
+      const dateFilter = document.getElementById('orderDateFilter')?.value || '';
       
       tbody.innerHTML = '';
 
       let filtered = allOrders.filter(o => {
         const matchSearch = (o.custName || '').toLowerCase().includes(searchQuery) || (o.id || '').toLowerCase().includes(searchQuery);
         const matchStatus = statusFilter === 'ALL' || o.status === statusFilter;
-        return matchSearch && matchStatus;
+        
+        let matchDate = true;
+        if (dateFilter && o.createdAt) {
+          const orderDate = o.createdAt.toDate ? o.createdAt.toDate().toISOString().split('T')[0] : '';
+          matchDate = orderDate === dateFilter;
+        }
+
+        return matchSearch && matchStatus && matchDate;
       });
 
+      // Update ringkasan angka statistik sesuai filter tanggal
+      updateStats(filtered);
+
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Pesanan tidak ditemukan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tidak ada pesanan untuk filter tanggal/kriteria ini.</td></tr>';
         return;
       }
 
@@ -365,13 +380,12 @@
             </td>
             <td class="p-3 text-center space-y-1">
               <div class="flex items-center justify-center gap-1">
-                <button onclick="updateOrderStatusAndSendWA('${o.docId}', 'Di Proses')" title="Ubah ke Di Proses & Kirim Struk Gambar" class="bg-blue-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-blue-700">Proses</button>
-                <button onclick="updateOrderStatusAndSendWA('${o.docId}', 'Selesai')" title="Ubah ke Selesai & Kirim Struk Gambar" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-emerald-700">Selesai</button>
-                <button onclick="updateOrderStatus('${o.docId}', 'Dibatalkan')" title="Batalkan Pesanan" class="bg-red-500 text-white font-bold px-2 py-1 rounded text-xs hover:bg-red-600">Batal</button>
+                <button onclick="updateOrderStatusAndSendWA('${o.docId}', 'Di Proses')" title="Ubah ke Di Proses & Kirim Chat WA" class="bg-blue-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-blue-700">Proses</button>
+                <button onclick="updateOrderStatusAndSendWA('${o.docId}', 'Selesai')" title="Ubah ke Selesai & Kirim Chat WA" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-emerald-700">Selesai</button>
+                <button onclick="deleteOrder('${o.docId}')" title="Hapus Riwayat Pesanan Ini" class="bg-red-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-red-700"><i class="fa-solid fa-trash"></i> Hapus</button>
               </div>
               <div class="flex items-center justify-center gap-1 pt-1">
-                <button onclick="openPrintModal('${o.docId}')" class="bg-amber-500 text-brand-darkgreen font-bold px-2 py-1 rounded text-xs hover:bg-amber-400"><i class="fa-solid fa-print"></i> Print</button>
-                <button onclick="sendReceiptToCustomerWA('${o.docId}')" class="bg-emerald-700 text-white font-bold px-2 py-1 rounded text-xs hover:bg-emerald-800"><i class="fa-brands fa-whatsapp"></i> WA Struk</button>
+                <button onclick="openPrintModal('${o.docId}')" class="bg-amber-500 text-brand-darkgreen font-bold px-2 py-1 rounded text-xs hover:bg-amber-400"><i class="fa-solid fa-print"></i> Print Struk</button>
               </div>
             </td>
           </tr>
@@ -379,7 +393,7 @@
       });
     }
 
-    // FUNGSI UTAMA MENGUBAH STATUS AKSI DAN MENGIRIM STRUK GAMBAR VIA WA
+    // MENGUBAH STATUS PESANAN & TERHUBUNG CHAT OTOMATIS KE WHATSAPP
     async function updateOrderStatusAndSendWA(docId, newStatus) {
       const order = allOrders.find(o => o.docId === docId);
       if (!order) return;
@@ -387,47 +401,13 @@
       // Update status di Firestore
       await db.collection('orders').doc(docId).update({ status: newStatus });
 
-      // Persiapkan elemen nota tersembunyi untuk dikonversi menjadi gambar jika belum ada
-      let imgBase64 = order.receiptImg;
-
-      if (!imgBase64) {
-        let itemsStr = '';
-        if (order.items) {
-          order.items.forEach(i => {
-            itemsStr += `<div class="flex justify-between"><span>${i.name} x${i.qty}</span><span>Rp ${(i.price * i.qty).toLocaleString('id-ID')}</span></div>`;
-          });
-        }
-        document.getElementById('hiddenReceiptContent').innerHTML = `
-          <div><strong>ID:</strong> ${order.id || order.docId}</div>
-          <div><strong>Pemesan:</strong> ${order.custName}</div>
-          <div><strong>No WA:</strong> ${order.custWA}</div>
-          <div><strong>Metode:</strong> ${order.payMethod}</div>
-          <div class="border-t border-b border-gray-300 my-2 py-1 space-y-1">
-            ${itemsStr}
-          </div>
-          <div class="flex justify-between font-bold text-sm"><span>TOTAL:</span><span>Rp ${(order.totalPrice || 0).toLocaleString('id-ID')}</span></div>
-        `;
-
-        const hiddenElem = document.getElementById('hiddenReceiptContainer');
-        const canvas = await html2canvas(hiddenElem, { scale: 2 });
-        imgBase64 = canvas.toDataURL('image/png');
-        await db.collection('orders').doc(docId).update({ receiptImg: imgBase64 });
-      }
-
-      // Download Struk Gambar secara otomatis
-      if (imgBase64) {
-        const a = document.createElement('a');
-        a.href = imgBase64;
-        a.download = `Struk_${order.id || 'Nota'}_MyGabin.png`;
-        a.click();
-      }
-
-      // Tentukan format pesan WA sesuai dengan status
+      const orderCode = order.id || order.docId;
       let message = '';
+
       if (newStatus === 'Di Proses') {
-        message = "Halo Gabin lovers, pesanan dengan nota tertera sedang kami proses ya 😉✨";
+        message = `Halo Gabin Lovers, pesanan kamu dengan ${orderCode} sedang diproses ya 😉✨`;
       } else if (newStatus === 'Selesai') {
-        message = "Halo Gabin lovers, pesanan dengan nota tertera sudah selesai di proses dan siap antar, kirim share lokasi ya 😉✨";
+        message = `Halo Gabin Lovers, pesanan kamu dengan ${orderCode} siap diantar ya 😉✨`;
       }
 
       const formattedWA = (order.custWA || '').replace(/^0/, '62');
@@ -435,30 +415,18 @@
       window.open(waUrl, '_blank');
     }
 
-    async function sendReceiptToCustomerWA(docId) {
-      const order = allOrders.find(o => o.docId === docId);
-      if (!order) return;
-
-      let message = order.status === 'Selesai' 
-        ? "Halo Gabin lovers, pesanan dengan nota tertera sudah selesai di proses dan siap antar, kirim share lokasi ya 😉✨"
-        : "Halo Gabin lovers, pesanan dengan nota tertera sedang kami proses ya 😉✨";
-
-      if (order.receiptImg) {
-        const a = document.createElement('a');
-        a.href = order.receiptImg;
-        a.download = `Struk_${order.id || 'Nota'}_MyGabin.png`;
-        a.click();
+    // FUNGSI HAPUS RIWAYAT PESANAN
+    async function deleteOrder(docId) {
+      if (confirm('Apakah Anda yakin ingin menghapus riwayat pesanan ini? Total pendapatan dan riwayat akan otomatis berkurang.')) {
+        await db.collection('orders').doc(docId).delete();
+        alert('Riwayat pesanan berhasil dihapus!');
       }
-
-      const formattedWA = (order.custWA || '').replace(/^0/, '62');
-      const waUrl = `https://wa.me/${formattedWA}?text=${encodeURIComponent(message)}`;
-      window.open(waUrl, '_blank');
     }
 
     function exportOrdersToCSV() {
       if (allOrders.length === 0) return alert('Belum ada data pesanan untuk diekspor!');
 
-      const headers = ['ID Pesanan', 'Tanggal Transaksi', 'Nama Pemesan', 'WhatsApp', 'Detail Pesanan (Item x Qty)', 'Catatan Pemesan', 'Metode Pembayaran', 'Total Harga (Rp)', 'Status'];
+      const headers = ['ID Pesanan', 'Tanggal Transaksi', 'Nama Pemesan', 'WhatsApp', 'Detail Pesanan', 'Catatan', 'Metode Pembayaran', 'Total Harga (Rp)', 'Status'];
       let csvRows = [headers.join(';')];
 
       allOrders.forEach(o => {
@@ -486,24 +454,6 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    }
-
-    async function syncToGoogleSheets() {
-      if (!GOOGLE_SHEETS_WEBHOOK_URL) {
-        alert('Fitur Otomatis Google Sheets memerlukan URL Webhook App Script Anda.\n\nTips: Gunakan tombol "Ekspor CSV Terpisah Kolom" untuk langsung membuka file rapi di Excel!');
-        return;
-      }
-      try {
-        await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(allOrders)
-        });
-        alert('Data berhasil dikirim ke Google Sheets!');
-      } catch (err) {
-        alert('Gagal menyinkronkan data: ' + err.message);
-      }
     }
 
     function openPrintModal(docId) {
@@ -695,10 +645,6 @@
         await db.collection('products').doc(id).delete();
         alert('Produk berhasil dihapus!');
       }
-    }
-
-    async function updateOrderStatus(docId, status) {
-      await db.collection('orders').doc(docId).update({ status });
     }
 
     async function saveStock(id) {
