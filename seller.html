@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Penjual - My Gabin</title>
+  
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Firebase SDK (Compat) -->
@@ -80,7 +83,7 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-6 space-y-6 no-print">
-    <!-- RINGKASAN DATA -->
+    <!-- RINGKASAN DATA (STATS) -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-2xl shadow border">
         <div class="text-xs font-bold text-gray-400">Total Pesanan</div>
@@ -114,7 +117,7 @@
       </div>
     </div>
 
-    <!-- SEKSI PESANAN -->
+    <!-- SEKSI DAFTAR PESANAN -->
     <section id="sectionOrders" class="bg-white rounded-2xl shadow border p-4 space-y-4">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-3">
         <h2 class="font-black text-lg text-brand-darkgreen">Daftar Pesanan Masuk</h2>
@@ -155,7 +158,7 @@
       </div>
     </section>
 
-    <!-- SEKSI PRODUK & STOK -->
+    <!-- SEKSI MANAJEMEN PRODUK & STOK -->
     <section id="sectionProducts" class="hidden space-y-6">
       <div class="flex justify-between items-center">
         <h2 class="font-black text-xl text-brand-darkgreen">Manajemen Katalog Produk</h2>
@@ -167,7 +170,7 @@
     </section>
   </main>
 
-  <!-- MODAL DETAIL BUKTI BAYAR -->
+  <!-- MODAL BUKTI PEMBAYARAN -->
   <div id="proofModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div class="bg-white rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl">
       <div class="flex justify-between items-center border-b pb-2">
@@ -178,7 +181,7 @@
     </div>
   </div>
 
-  <!-- MODAL CETAK NOTA -->
+  <!-- MODAL CETAK NOTA / STRUK -->
   <div id="printReceiptModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b pb-2">
@@ -257,6 +260,7 @@
   </div>
 
   <script>
+    // KONFIGURASI FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyD__NfI8UCX4z955vq4ERc6TGp4S-e_ZeQ",
       authDomain: "my-gabin.firebaseapp.com",
@@ -366,6 +370,7 @@
       initialLoad = false;
     });
 
+    // REAL-TIME FIRESTORE PRODUCTS LISTENER
     db.collection('products').onSnapshot(snapshot => {
       allProducts = [];
       snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
@@ -628,6 +633,7 @@
       });
     }
 
+    // MEMBACA BERKAS DARI GALERI HP / LAPTOP (DIFIX & DIPERBAIKI)
     function previewSelectedImage(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -642,10 +648,11 @@
       reader.readAsDataURL(file);
     }
 
+    // MEMBACA DARI INPUT URL
     function previewUrlImage() {
-      const url = document.getElementById('prodImageUrl').value;
+      const url = document.getElementById('prodImageUrl').value.trim();
       if (url) {
-        currentBase64Image = '';
+        currentBase64Image = ''; // Kosongkan variabel galeri jika menggunakan URL
         document.getElementById('imagePreview').src = url;
         document.getElementById('imagePreviewContainer').classList.remove('hidden');
       }
@@ -676,10 +683,16 @@
       document.getElementById('prodStock').value = p.stock;
       document.getElementById('prodBadge').value = p.badge || '';
       document.getElementById('prodImageFile').value = '';
-      document.getElementById('prodImageUrl').value = p.img.startsWith('data:') ? '' : p.img;
       
-      currentBase64Image = p.img;
-      document.getElementById('imagePreview').src = p.img;
+      if (p.img && p.img.startsWith('data:')) {
+        currentBase64Image = p.img;
+        document.getElementById('prodImageUrl').value = '';
+      } else {
+        currentBase64Image = '';
+        document.getElementById('prodImageUrl').value = p.img || '';
+      }
+      
+      document.getElementById('imagePreview').src = p.img || '';
       document.getElementById('imagePreviewContainer').classList.remove('hidden');
 
       document.getElementById('productModal').classList.remove('hidden');
@@ -699,8 +712,9 @@
       const price = parseInt(document.getElementById('prodPrice').value) || 0;
       const stock = parseInt(document.getElementById('prodStock').value) || 0;
       const badge = document.getElementById('prodBadge').value;
-      const urlImg = document.getElementById('prodImageUrl').value;
+      const urlImg = document.getElementById('prodImageUrl').value.trim();
 
+      // Memastikan berkas dari galeri (Base64) diutamakan, jika kosong baru memakai URL
       const finalImg = currentBase64Image || urlImg;
 
       if (!finalImg) {
