@@ -48,6 +48,9 @@
       </div>
       
       <div class="flex items-center gap-2">
+        <button onclick="requestNotificationPermission()" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+          <i class="fa-solid fa-bell"></i> Aktifkan Notif
+        </button>
         <button onclick="playNotificationSound()" title="Uji Suara Notifikasi" class="bg-emerald-800 hover:bg-emerald-700 text-amber-300 text-xs font-bold px-3 py-2 rounded-xl border border-emerald-600 transition flex items-center gap-1.5">
           <i class="fa-solid fa-volume-high"></i> Tes Suara
         </button>
@@ -253,10 +256,51 @@
     let allProducts = [];
     let currentBase64Image = '';
     let initialLoad = true;
+    let audioCtx = null;
 
-    // FUNGSI BICARA TEKS SUARA
+    // AUDIO UNLOCK FOR REAL-TIME VOICE
+    function unlockAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.resume();
+      }
+    }
+    document.addEventListener('click', unlockAudioContext, { once: false });
+    document.addEventListener('touchstart', unlockAudioContext, { once: false });
+
+    // WEB NOTIFICATION API
+    function requestNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            showWebNotification('Notifikasi Aktif', 'Notifikasi pesanan baru masuk telah aktif!');
+          } else {
+            alert('Izin notifikasi ditolak.');
+          }
+        });
+      } else {
+        alert('Browser Anda tidak mendukung Web Notification API.');
+      }
+    }
+
+    function showWebNotification(title, body) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+          body: body,
+          icon: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=100&q=80'
+        });
+      }
+    }
+
+    // FUNGSI BICARA TEKS SUARA (WEB SPEECH API)
     function speakText(text) {
       if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'id-ID';
         utterance.rate = 0.9;
@@ -264,22 +308,29 @@
       }
     }
 
-    // Set Default Filter Tanggal ke Hari Ini & Suara Selamat Datang
+    // SET DEFAULT FILTER TANGGAL HARI INI & SAMBUTAN PENJUAL
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('orderDateFilter').value = today;
 
-      // Suara Sambutan Penjual
       setTimeout(() => {
         speakText("Selamat Datang usahawan muda");
       }, 800);
     });
 
+    // REAL-TIME FIRESTORE ORDERS LISTENER
     db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
       const isNewOrder = !initialLoad && snapshot.docChanges().some(change => change.type === 'added');
+      
       if (isNewOrder) {
         playNotificationSound();
         speakText("halo usahawan muda, silahkan check ada pesanan baru masuk");
+        
+        const latestDoc = snapshot.docChanges().find(change => change.type === 'added');
+        if (latestDoc) {
+          const oData = latestDoc.doc.data();
+          showWebNotification("Pesanan Baru Masuk!", `${oData.custName} memesan dengan ID ${oData.id || latestDoc.doc.id}`);
+        }
       }
 
       allOrders = [];
@@ -296,7 +347,7 @@
 
     function playNotificationSound() {
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        unlockAudioContext();
         const playTone = (freq, start, duration) => {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();

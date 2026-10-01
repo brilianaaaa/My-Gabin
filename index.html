@@ -78,6 +78,11 @@
       </div>
 
       <div class="flex items-center gap-2 md:gap-3">
+        <!-- TOMBOL IZIN NOTIFIKASI -->
+        <button onclick="requestNotificationPermission()" id="btnNotif" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-bell text-amber-300"></i> <span class="hidden md:inline">Notifikasi</span>
+        </button>
+
         <!-- TOMBOL CEK PESANAN -->
         <button onclick="openTrackModal()" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition">
           <i class="fa-solid fa-truck-fast text-amber-300"></i> <span class="hidden md:inline">Cek Pesanan</span>
@@ -114,11 +119,11 @@
 
     <!-- FILTER KATEGORI/BADGE & WISHLIST -->
     <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-2 no-scrollbar">
-      <button onclick="filterCategory('ALL')" class="badge-btn active border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white">Semua Varian</button>
-      <button onclick="filterCategory('Terlaris')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🔥 Terlaris</button>
-      <button onclick="filterCategory('Hemat')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🏷️ Paket Hemat</button>
-      <button onclick="filterCategory('Baru')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">✨ Varian Baru</button>
-      <button onclick="filterCategory('WISHLIST')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-pink-600 hover:bg-pink-50 border-pink-200">❤️ Wishlist Saya</button>
+      <button onclick="filterCategory('ALL', event)" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white">Semua Varian</button>
+      <button onclick="filterCategory('Terlaris', event)" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🔥 Terlaris</button>
+      <button onclick="filterCategory('Hemat', event)" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🏷️ Paket Hemat</button>
+      <button onclick="filterCategory('Baru', event)" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">✨ Varian Baru</button>
+      <button onclick="filterCategory('WISHLIST', event)" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-pink-600 hover:bg-pink-50 border-pink-200">❤️ Wishlist Saya</button>
     </div>
 
     <!-- KATALOG MENU -->
@@ -371,7 +376,7 @@
     </div>
   </div>
 
-  <!-- FIREBASE & CORE ENGINE -->
+  <!-- FIREBASE & ENGINE UTAMA -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD__NfI8UCX4z955vq4ERc6TGp4S-e_ZeQ",
@@ -402,12 +407,54 @@
     let payProofBase64 = '';
     let selectedCategory = 'ALL';
     let currentOrderCode = '';
+    let audioCtx = null;
 
     // USER DATA
     let currentUser = null;
     let userProfileData = null;
     let wishlist = [];
+    let activeOrdersListener = null;
 
+    // AUDIO UNLOCK FOR REAL-TIME SOUND PERMANENT
+    function unlockAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.resume();
+      }
+    }
+    document.addEventListener('click', unlockAudio, { once: false });
+    document.addEventListener('touchstart', unlockAudio, { once: false });
+
+    // WEB NOTIFICATION API PERMISSION
+    function requestNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            showWebNotification('Notifikasi Aktif', 'Anda akan menerima pembaruan status pesanan secara permanen!');
+          } else {
+            alert('Izin notifikasi ditolak.');
+          }
+        });
+      } else {
+        alert('Browser Anda tidak mendukung Web Notification API.');
+      }
+    }
+
+    function showWebNotification(title, body) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+          body: body,
+          icon: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=100&q=80'
+        });
+      }
+    }
+
+    // AUTH STATE
     auth.onAuthStateChanged(async (user) => {
       currentUser = user;
       const authBtnText = document.getElementById('userAuthBtnText');
@@ -415,11 +462,13 @@
         authBtnText.innerText = "Profil Saya";
         await fetchUserProfile(user.uid);
         listenUserWishlist(user.uid);
+        listenUserOrderStatus(user.uid);
       } else {
         authBtnText.innerText = "Masuk / Akun";
         userProfileData = null;
         wishlist = [];
         updateWishlistCount();
+        if (activeOrdersListener) activeOrdersListener();
       }
       renderProductsUI();
     });
@@ -444,6 +493,28 @@
       document.getElementById('wishlistCount').innerText = wishlist.length;
     }
 
+    // REAL-TIME ORDER STATUS MONITORING WITH SOUND & WEB PUSH NOTIFICATION
+    function listenUserOrderStatus(uid) {
+      if (activeOrdersListener) activeOrdersListener();
+      let isFirstLoad = true;
+
+      activeOrdersListener = db.collection('orders').where('userId', '==', uid).onSnapshot(snap => {
+        snap.docChanges().forEach(change => {
+          if (change.type === 'modified' && !isFirstLoad) {
+            const data = change.doc.data();
+            const text = `Halo ${data.custName}, status pesanan ${data.id} Anda telah diperbarui menjadi ${data.status}`;
+            
+            // WEBSPEECH REALTIME VOICE
+            speakCheckoutSuccess(text);
+            
+            // WEB NOTIFICATION API
+            showWebNotification(`Status Pesanan: ${data.status}`, `Pesanan ${data.id} sekarang berstatus "${data.status}".`);
+          }
+        });
+        isFirstLoad = false;
+      });
+    }
+
     db.collection('products').onSnapshot(snapshot => {
       if (snapshot.empty) {
         defaultProducts.forEach(p => db.collection('products').doc(p.id).set(p));
@@ -454,12 +525,14 @@
       }
     });
 
-    function filterCategory(cat) {
+    function filterCategory(cat, event) {
       selectedCategory = cat;
       document.querySelectorAll('.badge-btn').forEach(b => {
         b.className = 'badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100';
       });
-      event.target.className = 'badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white';
+      if(event && event.target) {
+        event.target.className = 'badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white';
+      }
       renderProductsUI();
     }
 
@@ -931,11 +1004,11 @@
       reader.readAsDataURL(file);
     }
 
-    // FUNGSI SUARA OTOMATIS PEMBELI
-    function speakCheckoutSuccess(custName) {
+    // FUNGSI SUARA OTOMATIS REAL-TIME PEMBELI
+    function speakCheckoutSuccess(textMessage) {
       if ('speechSynthesis' in window) {
-        const text = `HALO ${custName} TERIMAKASIH SUDAH CHECK OUT`;
-        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(textMessage);
         utterance.lang = 'id-ID';
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
@@ -1020,8 +1093,12 @@
 
         document.getElementById('successModal').classList.remove('hidden');
 
-        // BISA BICARA SUARA OTOMATIS
-        speakCheckoutSuccess(custName);
+        // WEB PUSH NOTIFICATION & SOUND REALTIME
+        showWebNotification('Pesanan Berhasil!', `Kode: ${newId} - Terima kasih telah memesan My Gabin.`);
+        speakCheckoutSuccess(`HALO ${custName} TERIMAKASIH SUDAH CHECK OUT`);
+
+        cart = [];
+        updateCartUI();
 
       } catch (error) {
         alert('Terjadi kesalahan saat membuat pesanan: ' + error.message);
