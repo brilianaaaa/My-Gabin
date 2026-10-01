@@ -36,6 +36,24 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
+  <!-- MODAL WELCOME / UNLOCK AUDIO -->
+  <div id="welcomeAudioModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-5 shadow-2xl border border-amber-200">
+      <div class="w-16 h-16 bg-amber-100 text-brand-darkgreen rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-inner border border-amber-300">
+        <i class="fa-solid fa-store"></i>
+      </div>
+      <div>
+        <h3 class="font-black text-xl text-brand-darkgreen">Selamat Datang di Portal Penjual!</h3>
+        <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+          Klik tombol di bawah untuk membuka dashboard dan mengaktifkan notifikasi suara pesanan secara otomatis.
+        </p>
+      </div>
+      <button onclick="handleOpenDashboard()" class="w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-black py-3.5 px-6 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
+        <i class="fa-solid fa-rocket text-base"></i> Buka Dashboard
+      </button>
+    </div>
+  </div>
+
   <!-- HEADER DASHBOARD -->
   <header class="bg-brand-darkgreen text-white shadow-md sticky top-0 z-40 no-print">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -257,8 +275,9 @@
     let currentBase64Image = '';
     let initialLoad = true;
     let audioCtx = null;
+    let isAudioUnlocked = false;
 
-    // AUDIO UNLOCK FOR REAL-TIME VOICE
+    // FUNGSI MEMBUKA KUNCIAN AUDIO UTAMA
     function unlockAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -269,7 +288,19 @@
       if ('speechSynthesis' in window) {
         window.speechSynthesis.resume();
       }
+      isAudioUnlocked = true;
     }
+
+    // HANDLER SAAT TOMBOL 'BUKA DASHBOARD' DIKLIK
+    function handleOpenDashboard() {
+      unlockAudioContext();
+      document.getElementById('welcomeAudioModal').classList.add('hidden');
+      
+      // Bunyikan ucapan salam secara otomatis setelah audio unlocked
+      speakText("Selamat Datang usahawan muda");
+    }
+
+    // BACKUP USER INTERACTION LISTENERS
     document.addEventListener('click', unlockAudioContext, { once: false });
     document.addEventListener('touchstart', unlockAudioContext, { once: false });
 
@@ -308,14 +339,10 @@
       }
     }
 
-    // SET DEFAULT FILTER TANGGAL HARI INI & SAMBUTAN PENJUAL
+    // SET DEFAULT FILTER TANGGAL HARI INI
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('orderDateFilter').value = today;
-
-      setTimeout(() => {
-        speakText("Selamat Datang usahawan muda");
-      }, 800);
     });
 
     // REAL-TIME FIRESTORE ORDERS LISTENER
