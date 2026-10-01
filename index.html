@@ -111,7 +111,7 @@
       </div>
     </div>
 
-    <!-- FILTER KATEGORI -->
+    <!-- FILTER KATEGORI/BADGE & WISHLIST -->
     <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-2 no-scrollbar">
       <button onclick="filterCategory('ALL')" class="badge-btn active border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-darkgreen text-white">Semua Varian</button>
       <button onclick="filterCategory('Terlaris')" class="badge-btn border px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-white text-gray-700 hover:bg-amber-100">🔥 Terlaris</button>
@@ -137,6 +137,7 @@
       </div>
       <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
       
+      <!-- RINCIAN HARGA -->
       <div class="p-4 border-t bg-gray-50 space-y-3">
         <div class="space-y-1 text-xs text-gray-600 border-b pb-2">
           <div class="flex justify-between"><span>Subtotal:</span><span id="cartSubtotal" class="font-bold">Rp 0</span></div>
@@ -148,7 +149,7 @@
     </div>
   </div>
 
-  <!-- MODAL AKUN -->
+  <!-- MODAL AKUN / LOGIN / REGISTRASI / PROFIL PEMBELI -->
   <div id="userModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border p-6 space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
@@ -156,12 +157,15 @@
         <button onclick="closeUserModal()" class="text-gray-500 text-xl">&times;</button>
       </div>
 
+      <!-- FORMS UNTUK BELUM LOGIN -->
       <div id="loggedOutView" class="space-y-4">
+        <!-- TAB TOGGLE LOGIN / DAFTAR -->
         <div class="flex border-b">
           <button onclick="switchAuthTab('login')" id="tabBtnLogin" class="flex-1 py-2 font-bold text-xs border-b-2 border-brand-green text-brand-green">Masuk</button>
           <button onclick="switchAuthTab('register')" id="tabBtnRegister" class="flex-1 py-2 font-bold text-xs text-gray-400">Daftar Akun Baru</button>
         </div>
 
+        <!-- FORM LOGIN -->
         <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3">
           <div>
             <label class="block text-xs font-bold mb-1">Email</label>
@@ -176,6 +180,7 @@
           </button>
         </form>
 
+        <!-- FORM REGISTRASI -->
         <form id="registerForm" onsubmit="handleRegister(event)" class="hidden space-y-3">
           <div>
             <label class="block text-xs font-bold mb-1">Nama Lengkap *</label>
@@ -199,7 +204,9 @@
         </form>
       </div>
 
+      <!-- DASHBOARD SETELAH LOGIN -->
       <div id="loggedInView" class="hidden space-y-4">
+        <!-- PROFILE CARD WITH REWARD POINTS -->
         <div class="bg-gradient-to-r from-emerald-800 to-brand-green text-white p-4 rounded-xl flex items-center justify-between shadow">
           <div>
             <div id="userProfileName" class="font-black text-base">Nama Pembeli</div>
@@ -213,16 +220,19 @@
           </div>
         </div>
 
+        <!-- TAB AKUN PEMBELI -->
         <div class="flex border-b text-xs font-bold">
           <button onclick="switchProfileTab('orders')" id="pTabBtnOrders" class="flex-1 py-2 border-b-2 border-brand-green text-brand-green">Riwayat Pesanan</button>
           <button onclick="switchProfileTab('addresses')" id="pTabBtnAddresses" class="flex-1 py-2 text-gray-400">Alamat Favorit</button>
           <button onclick="switchProfileTab('wishlist')" id="pTabBtnWishlist" class="flex-1 py-2 text-gray-400">Wishlist (<span id="wishlistCount">0</span>)</button>
         </div>
 
+        <!-- TAB RIWAYAT PESANAN -->
         <div id="pTabOrders" class="space-y-3">
           <div id="userOrdersList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
         </div>
 
+        <!-- TAB ALAMAT FAVORIT -->
         <div id="pTabAddresses" class="hidden space-y-3">
           <form onsubmit="handleSaveAddress(event)" class="space-y-2 border p-3 rounded-xl bg-gray-50">
             <div class="text-xs font-bold text-brand-darkgreen">+ Tambah Alamat Baru</div>
@@ -234,6 +244,7 @@
           <div id="savedAddressesList" class="space-y-2 max-h-48 overflow-y-auto"></div>
         </div>
 
+        <!-- TAB WISHLIST -->
         <div id="pTabWishlist" class="hidden space-y-2">
           <div id="wishlistGrid" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"></div>
         </div>
@@ -253,6 +264,7 @@
         <button onclick="closeCheckoutModal()" class="text-gray-500 text-xl">&times;</button>
       </div>
       
+      <!-- PILIH ALAMAT FAVORIT JIKA LOGIN -->
       <div id="savedAddressSelectorBox" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-1">
         <label class="block text-xs font-bold text-brand-darkgreen">Gunakan Alamat Tersimpan:</label>
         <select id="savedAddressSelect" onchange="applySavedAddressToForm()" class="w-full border p-2 text-xs rounded-lg bg-white">
@@ -317,6 +329,7 @@
         <h3 class="font-black text-base text-brand-darkgreen">Lacak Pesanan Anda</h3>
         <button onclick="closeTrackModal()" class="text-gray-500 text-lg">&times;</button>
       </div>
+      
       <div class="space-y-2">
         <label class="text-xs font-bold text-gray-600 block">Masukkan Kode Pesanan (ID):</label>
         <div class="flex gap-2">
@@ -324,11 +337,12 @@
           <button onclick="searchOrderStatus()" class="bg-brand-green text-white font-bold px-3 py-2 rounded-xl text-xs">Cari</button>
         </div>
       </div>
+
       <div id="trackResult" class="hidden border rounded-xl p-3 bg-gray-50 text-xs space-y-2"></div>
     </div>
   </div>
 
-  <!-- MODAL SUKSES -->
+  <!-- MODAL SUKSES (STRUK DIGITAL GAMBAR & WA DIRECT) -->
   <div id="successModal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl my-8">
       <div class="w-16 h-16 bg-emerald-100 text-brand-green rounded-full flex items-center justify-center text-3xl mx-auto"><i class="fa-solid fa-circle-check"></i></div>
@@ -341,11 +355,13 @@
         </div>
         <ol class="list-decimal list-inside space-y-1 text-[11px] font-medium leading-tight">
           <li>Klik tombol hijau <strong>"Kirim Struk Gambar ke WA Penjual"</strong> di bawah.</li>
-          <li>File gambar struk akan <strong>otomatis tersimpan</strong> di HP Anda.</li>
-          <li>Di obrolan WhatsApp, pilih gambar struk yang baru terunduh tadi, lalu kirimkan.</li>
+          <li>File gambar struk akan <strong>otomatis tersimpan</strong> di galeri/folder Download HP Anda.</li>
+          <li>Aplikasi WhatsApp akan terbuka otomatis membawa teks pesan.</li>
+          <li>Di obrolan WhatsApp, klik ikon <strong>klip/kamera (lampiran)</strong>, pilih gambar struk yang baru terunduh tadi, lalu kirimkan.</li>
         </ol>
       </div>
 
+      <!-- ELEMEN STRUK DIGITAL UNTUK DIKONVERSI MENJADI GAMBAR -->
       <div id="printableReceipt" class="border rounded-xl p-4 bg-white text-left text-xs space-y-2 font-mono border-dashed border-amber-400 shadow-sm">
         <div class="text-center font-bold text-brand-darkgreen border-b border-amber-300 pb-2">
           🍦 MY GABIN BANGKALAN 🍦<br>
@@ -368,7 +384,7 @@
     </div>
   </div>
 
-  <!-- SCRIPT ENGINE (FIREBASE INTEGRATION) -->
+  <!-- FIREBASE & CORE ENGINE -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD__NfI8UCX4z955vq4ERc6TGp4S-e_ZeQ",
@@ -400,10 +416,12 @@
     let selectedCategory = 'ALL';
     let currentReceiptImageBase64 = '';
 
+    // USER DATA
     let currentUser = null;
     let userProfileData = null;
     let wishlist = [];
 
+    // LISTEN AUTH STATE
     auth.onAuthStateChanged(async (user) => {
       currentUser = user;
       const authBtnText = document.getElementById('userAuthBtnText');
@@ -422,7 +440,9 @@
 
     async function fetchUserProfile(uid) {
       const doc = await db.collection('users').doc(uid).get();
-      if (doc.exists) userProfileData = doc.data();
+      if (doc.exists) {
+        userProfileData = doc.data();
+      }
     }
 
     function listenUserWishlist(uid) {
@@ -510,7 +530,7 @@
 
     async function toggleWishlist(productId) {
       if (!currentUser) {
-        alert('Silakan login terlebih dahulu!');
+        alert('Silakan login terlebih dahulu untuk menyimpan produk ke Wishlist favorit!');
         openUserModal();
         return;
       }
@@ -563,7 +583,7 @@
       let total = 0;
 
       if (cart.length === 0) {
-        container.innerHTML = '<p class="text-center text-gray-400 my-8 text-sm">Keranjang Anda kosong.</p>';
+        container.innerHTML = '<p class="text-center text-gray-400 my-8 text-sm">Keranjang Anda masih kosong.</p>';
       }
 
       cart.forEach(i => {
@@ -593,6 +613,7 @@
       if (!item) return;
 
       item.qty += delta;
+
       if (prod && item.qty > prod.stock) {
         item.qty = prod.stock;
         alert(`Batas stok tercapai (${prod.stock}).`);
@@ -605,13 +626,16 @@
     function toggleCartDrawer() { document.getElementById('cartDrawer').classList.toggle('translate-x-full'); }
     
     function openCheckoutModal() { 
-      if(cart.length === 0) return alert('Keranjang belanjaan kosong!');
+      if(cart.length === 0) return alert('Keranjang belanjaan Anda masih kosong!');
       toggleCartDrawer(); 
+      
+      // Auto-fill jika login
       if (currentUser && userProfileData) {
         document.getElementById('custName').value = userProfileData.name || '';
         document.getElementById('custWA').value = userProfileData.phone || '';
         loadSavedAddressesDropdown();
       }
+
       document.getElementById('checkoutModal').classList.remove('hidden'); 
     }
     
@@ -619,6 +643,7 @@
     function openTrackModal() { document.getElementById('trackModal').classList.remove('hidden'); }
     function closeTrackModal() { document.getElementById('trackModal').classList.add('hidden'); }
 
+    // AUTH & USER PROFILE MODAL FUNCTIONS
     function openUserModal() {
       const loggedOutView = document.getElementById('loggedOutView');
       const loggedInView = document.getElementById('loggedInView');
@@ -626,6 +651,8 @@
       if (currentUser) {
         loggedOutView.classList.add('hidden');
         loggedInView.classList.remove('hidden');
+        
+        // Render profil
         document.getElementById('userProfileName').innerText = userProfileData?.name || 'Pembeli My Gabin';
         document.getElementById('userProfileEmail').innerText = currentUser.email;
         document.getElementById('userProfilePhone').innerText = `WA: ${userProfileData?.phone || '-'}`;
@@ -659,38 +686,54 @@
     }
 
     function switchProfileTab(tab) {
+      const btnOrders = document.getElementById('pTabBtnOrders');
+      const btnAddresses = document.getElementById('pTabBtnAddresses');
+      const btnWishlist = document.getElementById('pTabBtnWishlist');
+
       document.getElementById('pTabOrders').classList.toggle('hidden', tab !== 'orders');
       document.getElementById('pTabAddresses').classList.toggle('hidden', tab !== 'addresses');
       document.getElementById('pTabWishlist').classList.toggle('hidden', tab !== 'wishlist');
 
-      document.getElementById('pTabBtnOrders').className = tab === 'orders' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
-      document.getElementById('pTabBtnAddresses').className = tab === 'addresses' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
-      document.getElementById('pTabBtnWishlist').className = tab === 'wishlist' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
+      btnOrders.className = tab === 'orders' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
+      btnAddresses.className = tab === 'addresses' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
+      btnWishlist.className = tab === 'wishlist' ? 'flex-1 py-2 border-b-2 border-brand-green text-brand-green' : 'flex-1 py-2 text-gray-400';
     }
 
     async function handleLogin(e) {
       e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const pass = document.getElementById('loginPassword').value;
+      
       try {
-        await auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+        await auth.signInWithEmailAndPassword(email, pass);
         alert('Berhasil masuk!');
         openUserModal();
-      } catch (err) { alert('Gagal masuk: ' + err.message); }
+      } catch (err) {
+        alert('Gagal masuk: ' + err.message);
+      }
     }
 
     async function handleRegister(e) {
       e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const phone = document.getElementById('regPhone').value;
+      const email = document.getElementById('regEmail').value;
+      const pass = document.getElementById('regPassword').value;
+
       try {
-        const cred = await auth.createUserWithEmailAndPassword(document.getElementById('regEmail').value, document.getElementById('regPassword').value);
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
         await db.collection('users').doc(cred.user.uid).set({
-          name: document.getElementById('regName').value,
-          phone: document.getElementById('regPhone').value,
-          email: document.getElementById('regEmail').value,
+          name: name,
+          phone: phone,
+          email: email,
           points: 0,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         alert('Pendaftaran akun berhasil!');
         openUserModal();
-      } catch (err) { alert('Gagal pendaftaran: ' + err.message); }
+      } catch (err) {
+        alert('Gagal pendaftaran: ' + err.message);
+      }
     }
 
     function handleLogout() {
@@ -699,9 +742,11 @@
       closeUserModal();
     }
 
+    // RIWAYAT PESANAN PEMBELI
     async function loadUserOrdersHistory() {
       const container = document.getElementById('userOrdersList');
       container.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Memuat riwayat...</div>';
+
       const snap = await db.collection('orders').where('userId', '==', currentUser.uid).get();
       container.innerHTML = '';
 
@@ -725,26 +770,29 @@
       });
     }
 
+    // ALAMAT FAVORIT PEMBELI
     async function handleSaveAddress(e) {
       e.preventDefault();
+      const label = document.getElementById('addrLabel').value;
+      const maps = document.getElementById('addrMaps').value;
+      const detail = document.getElementById('addrDetail').value;
+
       await db.collection('users').doc(currentUser.uid).collection('addresses').add({
-        label: document.getElementById('addrLabel').value,
-        maps: document.getElementById('addrMaps').value,
-        detail: document.getElementById('addrDetail').value,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        label, maps, detail, createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+
       document.getElementById('addrLabel').value = '';
       document.getElementById('addrMaps').value = '';
       document.getElementById('addrDetail').value = '';
-      alert('Alamat tersimpan!');
+      alert('Alamat favorit disimpan!');
       loadSavedAddresses();
     }
 
     async function loadSavedAddresses() {
       const container = document.getElementById('savedAddressesList');
       container.innerHTML = '';
+
       const snap = await db.collection('users').doc(currentUser.uid).collection('addresses').get();
-      
       if (snap.empty) {
         container.innerHTML = '<div class="text-center text-xs text-gray-400 py-2">Belum ada alamat tersimpan.</div>';
         return;
@@ -773,11 +821,16 @@
     async function loadSavedAddressesDropdown() {
       const box = document.getElementById('savedAddressSelectorBox');
       const select = document.getElementById('savedAddressSelect');
+
       const snap = await db.collection('users').doc(currentUser.uid).collection('addresses').get();
-      if (snap.empty) { box.classList.add('hidden'); return; }
+      if (snap.empty) {
+        box.classList.add('hidden');
+        return;
+      }
 
       box.classList.remove('hidden');
       select.innerHTML = '<option value="">-- Pilih Alamat Favorit --</option>';
+
       snap.forEach(doc => {
         const a = doc.data();
         select.innerHTML += `<option value="${doc.id}">${a.label} - ${a.detail.slice(0,25)}...</option>`;
@@ -787,6 +840,7 @@
     async function applySavedAddressToForm() {
       const addrId = document.getElementById('savedAddressSelect').value;
       if (!addrId) return;
+
       const doc = await db.collection('users').doc(currentUser.uid).collection('addresses').doc(addrId).get();
       if (doc.exists) {
         const a = doc.data();
@@ -795,11 +849,12 @@
       }
     }
 
+    // WISHLIST TAB IN PROFILE
     function renderWishlistTabUI() {
       const grid = document.getElementById('wishlistGrid');
       grid.innerHTML = '';
-      const favProds = products.filter(p => wishlist.includes(p.id));
 
+      const favProds = products.filter(p => wishlist.includes(p.id));
       if (favProds.length === 0) {
         grid.innerHTML = '<div class="col-span-2 text-center text-xs text-gray-400 py-4">Belum ada wishlist.</div>';
         return;
@@ -826,10 +881,10 @@
 
       resBox.classList.remove('hidden');
       resBox.innerHTML = '<span class="text-gray-400">Mencari...</span>';
-      const snap = await db.collection('orders').where('id', '==', code).get();
 
+      const snap = await db.collection('orders').where('id', '==', code).get();
       if (snap.empty) {
-        resBox.innerHTML = '<span class="text-red-500 font-bold">Pesanan tidak ditemukan!</span>';
+        resBox.innerHTML = '<span class="text-red-500 font-bold">Pesanan tidak ditemukan! Periksa kembali ID Anda.</span>';
       } else {
         const o = snap.docs[0].data();
         resBox.innerHTML = `
@@ -859,6 +914,7 @@
     function previewPayProof(e) {
       const file = e.target.files[0];
       if (!file) return;
+
       const reader = new FileReader();
       reader.onload = function(evt) {
         payProofBase64 = evt.target.result;
@@ -871,13 +927,18 @@
     async function handleCheckoutSubmit(e) {
       e.preventDefault();
       const method = document.getElementById('payMethod').value;
-      if (method !== 'Cash' && !payProofBase64) return alert('Wajib melampirkan bukti transfer!');
+
+      if (method !== 'Cash' && !payProofBase64) {
+        alert('Anda wajib melampirkan foto bukti pembayaran transfer!');
+        return;
+      }
 
       document.getElementById('btnSubmitOrder').disabled = true;
 
       const newId = 'MGB-' + Date.now().toString().slice(-6);
       const custName = document.getElementById('custName').value;
       const custWA = document.getElementById('custWA').value;
+      const custNotes = document.getElementById('custNotes').value;
       const totalPrice = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
 
       let itemsStr = '';
@@ -890,7 +951,9 @@
         <div><strong>Pemesan:</strong> ${custName}</div>
         <div><strong>No WA:</strong> ${custWA}</div>
         <div><strong>Metode:</strong> ${method}</div>
-        <div class="border-t border-b border-gray-300 my-2 py-1 space-y-1">${itemsStr}</div>
+        <div class="border-t border-b border-gray-300 my-2 py-1 space-y-1">
+          ${itemsStr}
+        </div>
         <div class="flex justify-between font-bold text-sm"><span>TOTAL:</span><span>Rp ${totalPrice.toLocaleString('id-ID')}</span></div>
       `;
 
@@ -906,7 +969,7 @@
         custName: custName,
         custWA: custWA,
         custMaps: document.getElementById('custMaps').value,
-        custNotes: document.getElementById('custNotes').value,
+        custNotes: custNotes,
         items: cart,
         totalPrice: totalPrice,
         payMethod: method,
@@ -918,6 +981,7 @@
       try {
         await db.collection('orders').add(orderData);
 
+        // Tambah poin pengguna jika login (1 Poin tiap Rp 10.000)
         if (currentUser) {
           const earnedPoints = Math.floor(totalPrice / 10000);
           await db.collection('users').doc(currentUser.uid).update({
@@ -928,7 +992,8 @@
         for (let item of cart) {
           const prod = products.find(p => p.id === item.id);
           if (prod) {
-            await db.collection('products').doc(item.id).update({ stock: Math.max(0, prod.stock - item.qty) });
+            const newStock = Math.max(0, prod.stock - item.qty);
+            await db.collection('products').doc(item.id).update({ stock: newStock });
           }
         }
 
@@ -936,7 +1001,7 @@
         document.getElementById('createdOrderId').innerText = newId;
         document.getElementById('successModal').classList.remove('hidden');
       } catch (error) {
-        alert('Terjadi kesalahan: ' + error.message);
+        alert('Terjadi kesalahan saat membuat pesanan: ' + error.message);
         document.getElementById('btnSubmitOrder').disabled = false;
       }
     }
@@ -948,8 +1013,10 @@
         a.download = `Struk_MyGabin_${Date.now()}.png`;
         a.click();
       }
-      const message = "Halo My Gabin, ini struk pembelian saya, tolong diproses ya 😉✨";
-      window.open(`https://wa.me/6285936618342?text=${encodeURIComponent(message)}`, '_blank');
+
+      const message = "Halo My Gabin, ini struk pembelian saya, tolong di proses ya 😉✨";
+      const waUrl = `https://wa.me/6285936618342?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank');
     }
   </script>
 </body>
