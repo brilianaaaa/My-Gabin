@@ -254,16 +254,32 @@
     let currentBase64Image = '';
     let initialLoad = true;
 
-    // Set Default Filter Tanggal ke Hari Ini
+    // FUNGSI BICARA TEKS SUARA
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // Set Default Filter Tanggal ke Hari Ini & Suara Selamat Datang
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('orderDateFilter').value = today;
+
+      // Suara Sambutan Penjual
+      setTimeout(() => {
+        speakText("Selamat Datang usahawan muda");
+      }, 800);
     });
 
     db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
       const isNewOrder = !initialLoad && snapshot.docChanges().some(change => change.type === 'added');
       if (isNewOrder) {
         playNotificationSound();
+        speakText("halo usahawan muda, silahkan check ada pesanan baru masuk");
       }
 
       allOrders = [];
@@ -297,12 +313,11 @@
         playTone(659.25, 0, 0.25);   
         playTone(880.00, 0.25, 0.4); 
       } catch (e) {
-        console.log('Audio Autoplay terhalang oleh browser');
+        console.log('Audio Autoplay terhalang browser');
       }
     }
 
     function updateStats(filteredList) {
-      // Ringkasan dihitung dari data yang telah difilter tanggalnya
       document.getElementById('statTotalOrders').innerText = filteredList.length;
       document.getElementById('statPendingOrders').innerText = filteredList.filter(o => o.status === 'Menunggu Konfirmasi').length;
       document.getElementById('statCompletedOrders').innerText = filteredList.filter(o => o.status === 'Selesai').length;
@@ -339,7 +354,6 @@
         return matchSearch && matchStatus && matchDate;
       });
 
-      // Update ringkasan angka statistik sesuai filter tanggal
       updateStats(filtered);
 
       if (filtered.length === 0) {
@@ -349,7 +363,6 @@
 
       filtered.forEach(o => {
         const itemsList = o.items ? o.items.map(i => `${i.name} x${i.qty}`).join(', ') : '-';
-        const formattedWA = (o.custWA || '').replace(/^0/, '62');
 
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
@@ -393,12 +406,10 @@
       });
     }
 
-    // MENGUBAH STATUS PESANAN & TERHUBUNG CHAT OTOMATIS KE WHATSAPP
     async function updateOrderStatusAndSendWA(docId, newStatus) {
       const order = allOrders.find(o => o.docId === docId);
       if (!order) return;
 
-      // Update status di Firestore
       await db.collection('orders').doc(docId).update({ status: newStatus });
 
       const orderCode = order.id || order.docId;
@@ -415,7 +426,6 @@
       window.open(waUrl, '_blank');
     }
 
-    // FUNGSI HAPUS RIWAYAT PESANAN
     async function deleteOrder(docId) {
       if (confirm('Apakah Anda yakin ingin menghapus riwayat pesanan ini? Total pendapatan dan riwayat akan otomatis berkurang.')) {
         await db.collection('orders').doc(docId).delete();

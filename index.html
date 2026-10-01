@@ -29,8 +29,9 @@
   <style>
     @media print {
       body * { visibility: hidden; }
-      #printableReceipt, #printableReceipt * { visibility: visible; }
-      #printableReceipt { position: absolute; left: 0; top: 0; width: 100%; }
+      #invoiceArea, #invoiceArea * { visibility: visible; }
+      #invoiceArea { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-print { display: none !important; }
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -157,15 +158,12 @@
         <button onclick="closeUserModal()" class="text-gray-500 text-xl">&times;</button>
       </div>
 
-      <!-- FORMS UNTUK BELUM LOGIN -->
       <div id="loggedOutView" class="space-y-4">
-        <!-- TAB TOGGLE LOGIN / DAFTAR -->
         <div class="flex border-b">
           <button onclick="switchAuthTab('login')" id="tabBtnLogin" class="flex-1 py-2 font-bold text-xs border-b-2 border-brand-green text-brand-green">Masuk</button>
           <button onclick="switchAuthTab('register')" id="tabBtnRegister" class="flex-1 py-2 font-bold text-xs text-gray-400">Daftar Akun Baru</button>
         </div>
 
-        <!-- FORM LOGIN -->
         <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3">
           <div>
             <label class="block text-xs font-bold mb-1">Email</label>
@@ -180,7 +178,6 @@
           </button>
         </form>
 
-        <!-- FORM REGISTRASI -->
         <form id="registerForm" onsubmit="handleRegister(event)" class="hidden space-y-3">
           <div>
             <label class="block text-xs font-bold mb-1">Nama Lengkap *</label>
@@ -204,9 +201,7 @@
         </form>
       </div>
 
-      <!-- DASHBOARD SETELAH LOGIN -->
       <div id="loggedInView" class="hidden space-y-4">
-        <!-- PROFILE CARD WITH REWARD POINTS -->
         <div class="bg-gradient-to-r from-emerald-800 to-brand-green text-white p-4 rounded-xl flex items-center justify-between shadow">
           <div>
             <div id="userProfileName" class="font-black text-base">Nama Pembeli</div>
@@ -220,19 +215,16 @@
           </div>
         </div>
 
-        <!-- TAB AKUN PEMBELI -->
         <div class="flex border-b text-xs font-bold">
           <button onclick="switchProfileTab('orders')" id="pTabBtnOrders" class="flex-1 py-2 border-b-2 border-brand-green text-brand-green">Riwayat Pesanan</button>
           <button onclick="switchProfileTab('addresses')" id="pTabBtnAddresses" class="flex-1 py-2 text-gray-400">Alamat Favorit</button>
           <button onclick="switchProfileTab('wishlist')" id="pTabBtnWishlist" class="flex-1 py-2 text-gray-400">Wishlist (<span id="wishlistCount">0</span>)</button>
         </div>
 
-        <!-- TAB RIWAYAT PESANAN -->
         <div id="pTabOrders" class="space-y-3">
           <div id="userOrdersList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
         </div>
 
-        <!-- TAB ALAMAT FAVORIT -->
         <div id="pTabAddresses" class="hidden space-y-3">
           <form onsubmit="handleSaveAddress(event)" class="space-y-2 border p-3 rounded-xl bg-gray-50">
             <div class="text-xs font-bold text-brand-darkgreen">+ Tambah Alamat Baru</div>
@@ -244,7 +236,6 @@
           <div id="savedAddressesList" class="space-y-2 max-h-48 overflow-y-auto"></div>
         </div>
 
-        <!-- TAB WISHLIST -->
         <div id="pTabWishlist" class="hidden space-y-2">
           <div id="wishlistGrid" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"></div>
         </div>
@@ -264,7 +255,6 @@
         <button onclick="closeCheckoutModal()" class="text-gray-500 text-xl">&times;</button>
       </div>
       
-      <!-- PILIH ALAMAT FAVORIT JIKA LOGIN -->
       <div id="savedAddressSelectorBox" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-1">
         <label class="block text-xs font-bold text-brand-darkgreen">Gunakan Alamat Tersimpan:</label>
         <select id="savedAddressSelect" onchange="applySavedAddressToForm()" class="w-full border p-2 text-xs rounded-lg bg-white">
@@ -342,22 +332,39 @@
     </div>
   </div>
 
-  <!-- MODAL SUKSES -->
+  <!-- MODAL SUKSES & NOTA/INVOICE -->
   <div id="successModal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl my-8">
       <div class="w-16 h-16 bg-emerald-100 text-brand-green rounded-full flex items-center justify-center text-3xl mx-auto"><i class="fa-solid fa-circle-check"></i></div>
       <h3 class="font-black text-xl text-brand-darkgreen">Pesanan Berhasil Disimpan!</h3>
-      <p class="text-xs text-gray-500">Kode Pesanan Anda: <strong id="createdOrderId" class="text-amber-600"></strong></p>
 
-      <div class="bg-amber-50 border border-amber-300 p-3 rounded-xl text-left text-xs space-y-1.5 text-amber-900 shadow-sm">
-        <div class="font-bold flex items-center gap-1.5 text-amber-800">
-          <i class="fa-solid fa-circle-info text-amber-600 text-sm"></i> Pesanan Terkirim
+      <!-- NOTA / INVOICE PESANAN -->
+      <div id="invoiceArea" class="bg-amber-50/50 border border-amber-300 p-4 rounded-xl text-left text-xs space-y-2 text-amber-900 shadow-sm font-mono">
+        <div class="text-center font-black border-b border-amber-300 pb-2 text-brand-darkgreen text-sm">
+          MY GABIN BANGKALAN<br>
+          <span class="text-[10px] font-normal text-gray-500">Nota Resmi Pembelian</span>
         </div>
-        <p class="text-[11px]">Pesanan Anda telah berhasil tercatat di sistem portal penjual My Gabin.</p>
+        <div class="flex justify-between"><span>Kode Pesanan:</span><strong id="createdOrderId" class="text-amber-700"></strong></div>
+        <div class="flex justify-between"><span>Nama Pemesan:</span><span id="invoiceCustName"></span></div>
+        <div class="flex justify-between"><span>Waktu:</span><span id="invoiceDate"></span></div>
+        <div class="flex justify-between"><span>Metode Bayar:</span><span id="invoicePayMethod"></span></div>
+        
+        <div class="border-t border-b border-amber-300 my-2 py-2 space-y-1" id="invoiceItems"></div>
+        
+        <div class="flex justify-between font-bold text-sm text-brand-darkgreen">
+          <span>TOTAL:</span>
+          <span id="invoiceTotalPrice"></span>
+        </div>
       </div>
 
-      <div class="space-y-2 pt-2">
-        <button onclick="location.reload()" class="w-full bg-brand-green hover:bg-brand-darkgreen text-white font-bold py-2.5 rounded-xl text-xs">
+      <div class="space-y-2 pt-2 no-print">
+        <button id="btnSendWA" onclick="sendOrderToWA()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Kirim Chat ke Penjual
+        </button>
+        <button onclick="window.print()" class="w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+          <i class="fa-solid fa-print"></i> Cetak / Simpan Nota
+        </button>
+        <button onclick="location.reload()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 rounded-xl text-xs">
           Selesai & Kembali
         </button>
       </div>
@@ -394,6 +401,7 @@
     let cart = [];
     let payProofBase64 = '';
     let selectedCategory = 'ALL';
+    let currentOrderCode = '';
 
     // USER DATA
     let currentUser = null;
@@ -717,7 +725,6 @@
       closeUserModal();
     }
 
-    // RIWAYAT PESANAN PEMBELI & FITUR BATALKAN PESANAN (BERLAKU 1 JAM)
     function loadUserOrdersHistory() {
       const container = document.getElementById('userOrdersList');
       container.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Memuat riwayat...</div>';
@@ -761,7 +768,6 @@
       });
     }
 
-    // FUNGSI MEMBATALKAN PESANAN OLEH PEMBELI (OTOMATIS TERHAPUS DI PENJUAL)
     async function cancelCustomerOrder(docId) {
       if (confirm('Apakah Anda yakin ingin membatalkan pesanan ini? Pesanan akan langsung terhapus dari sistem portal penjual.')) {
         try {
@@ -773,7 +779,6 @@
       }
     }
 
-    // ALAMAT FAVORIT PEMBELI
     async function handleSaveAddress(e) {
       e.preventDefault();
       const label = document.getElementById('addrLabel').value;
@@ -926,6 +931,25 @@
       reader.readAsDataURL(file);
     }
 
+    // FUNGSI SUARA OTOMATIS PEMBELI
+    function speakCheckoutSuccess(custName) {
+      if ('speechSynthesis' in window) {
+        const text = `HALO ${custName} TERIMAKASIH SUDAH CHECK OUT`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // KIRIM CHAT OTOMATIS KE WHATSAPP PENJUAL
+    function sendOrderToWA() {
+      const sellerWA = "6285936618342";
+      const message = `Halo My Gabin, pesanan dengan ${currentOrderCode} tolong diproses ya 😉✨`;
+      const waUrl = `https://wa.me/${sellerWA}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank');
+    }
+
     async function handleCheckoutSubmit(e) {
       e.preventDefault();
       const method = document.getElementById('payMethod').value;
@@ -938,15 +962,17 @@
       document.getElementById('btnSubmitOrder').disabled = true;
 
       const newId = 'MGB-' + Date.now().toString().slice(-6);
+      currentOrderCode = newId;
       const custName = document.getElementById('custName').value;
       const custWA = document.getElementById('custWA').value;
       const custNotes = document.getElementById('custNotes').value;
       const totalPrice = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      const dateStr = new Date().toLocaleString('id-ID');
 
       const orderData = {
         id: newId,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        dateStr: new Date().toLocaleString('id-ID'),
+        dateStr: dateStr,
         userId: currentUser ? currentUser.uid : null,
         custName: custName,
         custWA: custWA,
@@ -978,8 +1004,25 @@
         }
 
         closeCheckoutModal();
+        
+        // POPULATE INVOICE
         document.getElementById('createdOrderId').innerText = newId;
+        document.getElementById('invoiceCustName').innerText = custName;
+        document.getElementById('invoiceDate').innerText = dateStr;
+        document.getElementById('invoicePayMethod').innerText = method;
+        document.getElementById('invoiceTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+
+        let invoiceItemsHtml = '';
+        cart.forEach(item => {
+          invoiceItemsHtml += `<div class="flex justify-between"><span>${item.name} x${item.qty}</span><span>Rp ${(item.price * item.qty).toLocaleString('id-ID')}</span></div>`;
+        });
+        document.getElementById('invoiceItems').innerHTML = invoiceItemsHtml;
+
         document.getElementById('successModal').classList.remove('hidden');
+
+        // BISA BICARA SUARA OTOMATIS
+        speakCheckoutSuccess(custName);
+
       } catch (error) {
         alert('Terjadi kesalahan saat membuat pesanan: ' + error.message);
         document.getElementById('btnSubmitOrder').disabled = false;
