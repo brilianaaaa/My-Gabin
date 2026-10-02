@@ -14,8 +14,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-  <!-- HTML2Canvas Library -->
+  <!-- HTML2Canvas Library for JPG Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
     tailwind.config = {
@@ -28,28 +30,17 @@
       }
     }
   </script>
-  <style>
-    @media print {
-      body * { visibility: hidden; }
-      #printableReceiptArea, #printableReceiptArea * { visibility: visible; }
-      #printableReceiptArea { position: fixed; left: 0; top: 0; width: 80mm; padding: 10px; }
-      .no-print { display: none !important; }
-    }
-  </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
   <!-- MODAL WELCOME / UNLOCK AUDIO -->
-  <div id="welcomeAudioModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+  <div id="welcomeAudioModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-5 shadow-2xl border border-amber-200">
       <div class="w-16 h-16 bg-amber-100 text-brand-darkgreen rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-inner border border-amber-300">
         <i class="fa-solid fa-store"></i>
       </div>
       <div>
         <h3 class="font-black text-xl text-brand-darkgreen">Selamat Datang di Portal Penjual!</h3>
-        <p class="text-xs text-gray-500 mt-2 leading-relaxed">
-          Klik tombol di bawah untuk membuka dashboard dan mengaktifkan notifikasi suara pesanan secara otomatis.
-        </p>
       </div>
       <button onclick="handleOpenDashboard()" class="w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-black py-3.5 px-6 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
         <i class="fa-solid fa-rocket text-base"></i> Buka Dashboard
@@ -58,8 +49,8 @@
   </div>
 
   <!-- HEADER DASHBOARD -->
-  <header class="bg-brand-darkgreen text-white shadow-md sticky top-0 z-40 no-print">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+  <header class="bg-brand-darkgreen text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 bg-amber-400 text-brand-darkgreen rounded-xl flex items-center justify-center font-black text-lg">MG</div>
         <div>
@@ -68,6 +59,16 @@
         </div>
       </div>
       
+      <!-- STORE STATUS TOGGLE -->
+      <div class="flex items-center gap-3 bg-brand-green/80 px-3 py-1.5 rounded-2xl border border-emerald-600">
+        <span class="text-xs font-bold text-amber-200">Status Toko:</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="storeStatusToggle" onchange="toggleStoreStatus(this.checked)" class="sr-only peer">
+          <div class="w-11 h-6 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          <span id="storeStatusLabel" class="ml-2 text-xs font-black text-white">Buka</span>
+        </label>
+      </div>
+
       <div class="flex items-center gap-2">
         <button onclick="requestNotificationPermission()" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
           <i class="fa-solid fa-bell"></i> Aktifkan Notif
@@ -76,13 +77,13 @@
           <i class="fa-solid fa-volume-high"></i> Tes Suara
         </button>
         <a href="index.html" class="bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
-          <i class="fa-solid fa-store"></i> Lihat Toko (Tampilan Pembeli)
+          <i class="fa-solid fa-store"></i> Lihat Toko
         </a>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6 no-print">
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
     <!-- RINGKASAN DATA (STATS) -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-2xl shadow border">
@@ -103,16 +104,32 @@
       </div>
     </div>
 
+    <!-- SEKSI GRAFIK & ANALITIK -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-4 rounded-2xl shadow border">
+        <h3 class="font-bold text-sm text-brand-darkgreen mb-3"><i class="fa-solid fa-chart-line mr-1 text-emerald-600"></i> Tren Pendapatan Bulanan</h3>
+        <canvas id="revenueChart" class="max-h-56"></canvas>
+      </div>
+      <div class="bg-white p-4 rounded-2xl shadow border">
+        <h3 class="font-bold text-sm text-brand-darkgreen mb-3"><i class="fa-solid fa-chart-pie mr-1 text-amber-500"></i> Varian Produk Terlaris (Top Seller)</h3>
+        <canvas id="topSellerChart" class="max-h-56"></canvas>
+      </div>
+    </div>
+
     <!-- TAB NAVIGASI -->
-    <div class="flex border-b border-gray-200 justify-between items-center">
+    <div class="flex border-b border-gray-200 justify-between items-center flex-wrap gap-2">
       <div class="flex">
         <button onclick="switchTab('orders')" id="tabBtnOrders" class="py-2.5 px-5 font-bold text-sm border-b-2 border-brand-green text-brand-green">Daftar Pesanan</button>
         <button onclick="switchTab('products')" id="tabBtnProducts" class="py-2.5 px-5 font-bold text-sm text-gray-500 hover:text-brand-green">Kelola Produk & Stok</button>
       </div>
 
-      <div class="hidden md:flex items-center gap-2">
-        <button onclick="exportOrdersToCSV()" class="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow">
-          <i class="fa-solid fa-file-excel"></i> Ekspor CSV Terpisah Kolom
+      <!-- EKSPORE EXCEL / SPREADSHEET -->
+      <div class="flex items-center gap-2 py-2">
+        <select id="exportMonthSelect" class="border text-xs rounded-xl px-2 py-2 font-bold bg-white focus:outline-none">
+          <option value="ALL">Semua Data (Tanpa Batasan)</option>
+        </select>
+        <button onclick="exportOrdersToSpreadsheet()" class="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow">
+          <i class="fa-solid fa-file-excel"></i> Ekspor Spreadsheet (.csv)
         </button>
       </div>
     </div>
@@ -171,7 +188,7 @@
   </main>
 
   <!-- MODAL BUKTI PEMBAYARAN -->
-  <div id="proofModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+  <div id="proofModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl">
       <div class="flex justify-between items-center border-b pb-2">
         <h3 class="font-black text-sm text-brand-darkgreen">Bukti Pembayaran Transfer</h3>
@@ -181,11 +198,11 @@
     </div>
   </div>
 
-  <!-- MODAL CETAK NOTA / STRUK -->
-  <div id="printReceiptModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+  <!-- MODAL CETAK NOTA / STRUK (GAMBAR JPG) -->
+  <div id="printReceiptModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-black text-base text-brand-darkgreen"><i class="fa-solid fa-print text-amber-500 mr-2"></i>Cetak Nota Kemasan</h3>
+        <h3 class="font-black text-base text-brand-darkgreen"><i class="fa-solid fa-receipt text-amber-500 mr-2"></i>Nota / Struk Kemasan</h3>
         <button onclick="closePrintModal()" class="text-gray-500 text-lg">&times;</button>
       </div>
 
@@ -198,8 +215,8 @@
       </div>
 
       <div class="flex gap-2">
-        <button onclick="window.print()" class="flex-1 bg-brand-green hover:bg-brand-darkgreen text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
-          <i class="fa-solid fa-print"></i> Cetak Sekarang
+        <button onclick="downloadReceiptAsJPG()" class="flex-1 bg-brand-green hover:bg-brand-darkgreen text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+          <i class="fa-solid fa-download"></i> Unduh Gambar Struk (JPG)
         </button>
         <button onclick="closePrintModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-4 py-2.5 rounded-xl text-xs">
           Tutup
@@ -209,7 +226,7 @@
   </div>
 
   <!-- MODAL EDIT / TAMBAH PRODUK -->
-  <div id="productModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+  <div id="productModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 id="modalProductTitle" class="font-black text-lg text-brand-darkgreen">Tambah Produk Baru</h3>
@@ -222,6 +239,11 @@
         <div>
           <label class="block text-xs font-bold mb-1">Nama Produk Varian *</label>
           <input type="text" id="prodName" required placeholder="Contoh: Gabin Tiramisu" class="w-full border p-2.5 text-sm rounded-lg">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold mb-1">Deskripsi Produk *</label>
+          <textarea id="prodDesc" rows="3" required placeholder="Jelaskan cita rasa, bahan, atau kelebihan produk..." class="w-full border p-2.5 text-sm rounded-lg"></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -280,6 +302,8 @@
     let initialLoad = true;
     let audioCtx = null;
     let isAudioUnlocked = false;
+    let chartRevenueInstance = null;
+    let chartTopSellerInstance = null;
 
     // FUNGSI MEMBUKA KUNCIAN AUDIO UTAMA
     function unlockAudioContext() {
@@ -295,11 +319,11 @@
       isAudioUnlocked = true;
     }
 
-    // HANDLER SAAT TOMBOL 'BUKA DASHBOARD' DIKLIK
+    // HANDLER BUKA DASHBOARD + SUARA BUKA DASHBOARD LENGKAP & MAKSIMAL VOLUME
     function handleOpenDashboard() {
       unlockAudioContext();
       document.getElementById('welcomeAudioModal').classList.add('hidden');
-      speakText("Selamat Datang usahawan muda");
+      speakText("selamat datang usahawan muda, calon orang sukses di masa depan", 1.0);
     }
 
     document.addEventListener('click', unlockAudioContext, { once: false });
@@ -329,21 +353,41 @@
       }
     }
 
-    // FUNGSI BICARA TEKS SUARA (WEB SPEECH API)
-    function speakText(text) {
+    // FUNGSI BICARA TEKS SUARA (VOLUME MAKSIMAL)
+    function speakText(text, volume = 1.0) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'id-ID';
         utterance.rate = 0.9;
+        utterance.volume = volume; // Volume Maksimal (1.0)
         window.speechSynthesis.speak(utterance);
       }
+    }
+
+    // STATUS TOKO TOGGLE FIRESTORE
+    function listenStoreStatus() {
+      db.collection('settings').doc('storeStatus').onSnapshot(doc => {
+        if (doc.exists) {
+          const isOpen = doc.data().isOpen;
+          document.getElementById('storeStatusToggle').checked = isOpen;
+          document.getElementById('storeStatusLabel').innerText = isOpen ? 'Buka' : 'Tutup (Habis/Libur)';
+          document.getElementById('storeStatusLabel').className = isOpen ? 'ml-2 text-xs font-black text-emerald-300' : 'ml-2 text-xs font-black text-red-300';
+        } else {
+          db.collection('settings').doc('storeStatus').set({ isOpen: true });
+        }
+      });
+    }
+
+    async function toggleStoreStatus(isOpen) {
+      await db.collection('settings').doc('storeStatus').set({ isOpen: isOpen });
     }
 
     // SET DEFAULT FILTER TANGGAL HARI INI
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('orderDateFilter').value = today;
+      listenStoreStatus();
     });
 
     // REAL-TIME FIRESTORE ORDERS LISTENER
@@ -352,7 +396,7 @@
       
       if (isNewOrder) {
         playNotificationSound();
-        speakText("halo usahawan muda, silahkan check ada pesanan baru masuk");
+        speakText("halo usahawan muda, silahkan check ada pesanan baru masuk", 1.0);
         
         const latestDoc = snapshot.docChanges().find(change => change.type === 'added');
         if (latestDoc) {
@@ -363,7 +407,9 @@
 
       allOrders = [];
       snapshot.forEach(doc => allOrders.push({ docId: doc.id, ...doc.data() }));
+      populateExportMonthOptions();
       renderOrdersUI();
+      renderAnalyticsCharts();
       initialLoad = false;
     });
 
@@ -372,6 +418,7 @@
       allProducts = [];
       snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
       renderSellerProductsUI();
+      renderAnalyticsCharts();
     });
 
     function playNotificationSound() {
@@ -382,7 +429,7 @@
           const gain = audioCtx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
-          gain.gain.setValueAtTime(0.3, audioCtx.currentTime + start);
+          gain.gain.setValueAtTime(1.0, audioCtx.currentTime + start); // Volume Max
           gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + start + duration);
           osc.connect(gain);
           gain.connect(audioCtx.destination);
@@ -478,7 +525,7 @@
                 <button onclick="deleteOrder('${o.docId}')" title="Hapus Riwayat Pesanan Ini" class="bg-red-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-red-700"><i class="fa-solid fa-trash"></i> Hapus</button>
               </div>
               <div class="flex items-center justify-center gap-1 pt-1">
-                <button onclick="openPrintModal('${o.docId}')" class="bg-amber-500 text-brand-darkgreen font-bold px-2 py-1 rounded text-xs hover:bg-amber-400"><i class="fa-solid fa-print"></i> Print Struk</button>
+                <button onclick="openPrintModal('${o.docId}')" class="bg-amber-500 text-brand-darkgreen font-bold px-2 py-1 rounded text-xs hover:bg-amber-400"><i class="fa-solid fa-receipt"></i> Struk (JPG)</button>
               </div>
             </td>
           </tr>
@@ -513,14 +560,62 @@
       }
     }
 
-    function exportOrdersToCSV() {
+    // POPULATE BULAN UNTUK EKSPORE
+    function populateExportMonthOptions() {
+      const select = document.getElementById('exportMonthSelect');
+      const monthsSet = new Set();
+
+      allOrders.forEach(o => {
+        if (o.createdAt && o.createdAt.toDate) {
+          const d = o.createdAt.toDate();
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          monthsSet.add(key);
+        }
+      });
+
+      const sortedMonths = Array.from(monthsSet).sort().reverse();
+      select.innerHTML = '<option value="ALL">Semua Data (Tanpa Batasan)</option>';
+      
+      sortedMonths.forEach(m => {
+        const [year, month] = m.split('-');
+        const dateObj = new Date(year, month - 1);
+        const monthName = dateObj.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+        select.innerHTML += `<option value="${m}">Bulan ${monthName}</option>`;
+      });
+    }
+
+    // EKSPOR RIWAYAT PENJUALAN SPREADSHEET / EXCEL (.CSV) PER BULAN ATAU SELURUHNYA
+    function exportOrdersToSpreadsheet() {
       if (allOrders.length === 0) return alert('Belum ada data pesanan untuk diekspor!');
+
+      const selectedMonth = document.getElementById('exportMonthSelect').value;
+      let filteredOrders = allOrders;
+
+      if (selectedMonth !== 'ALL') {
+        filteredOrders = allOrders.filter(o => {
+          if (o.createdAt && o.createdAt.toDate) {
+            const d = o.createdAt.toDate();
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            return key === selectedMonth;
+          }
+          return false;
+        });
+      }
+
+      if (filteredOrders.length === 0) {
+        return alert('Tidak ada data pesanan pada bulan yang dipilih.');
+      }
 
       const headers = ['ID Pesanan', 'Tanggal Transaksi', 'Nama Pemesan', 'WhatsApp', 'Detail Pesanan', 'Catatan', 'Metode Pembayaran', 'Total Harga (Rp)', 'Status'];
       let csvRows = [headers.join(';')];
 
-      allOrders.forEach(o => {
+      let monthlyTotalRevenue = 0;
+
+      filteredOrders.forEach(o => {
         const itemsFormatted = o.items ? o.items.map(i => `${i.name} (${i.qty}x)`).join(' + ') : '';
+        const price = o.totalPrice || 0;
+        if (o.status === 'Selesai') monthlyTotalRevenue += price;
+
         const row = [
           `"${(o.id || '').replace(/"/g, '""')}"`,
           `"${(o.dateStr || '').replace(/"/g, '""')}"`,
@@ -529,21 +624,93 @@
           `"${itemsFormatted.replace(/"/g, '""')}"`,
           `"${(o.custNotes || '-').replace(/"/g, '""')}"`,
           `"${(o.payMethod || '').replace(/"/g, '""')}"`,
-          o.totalPrice || 0,
+          price,
           `"${(o.status || '').replace(/"/g, '""')}"`
         ];
         csvRows.push(row.join(';'));
       });
+
+      // BARIS PERHITUNGAN TOTAL PENDAPATAN BULANAN / KESELURUHAN
+      csvRows.push('');
+      csvRows.push(`"TOTAL PENDAPATAN (SELESAI)";"";"";"";"";"";"";"${monthlyTotalRevenue}";""`);
 
       const csvContent = '\uFEFF' + csvRows.join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `Rekap_Pesanan_MyGabin_${Date.now()}.csv`);
+      const fileNameStr = selectedMonth === 'ALL' ? 'Seluruh_Data_Penjualan' : `Penjualan_Bulan_${selectedMonth}`;
+      link.setAttribute('download', `MyGabin_${fileNameStr}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+
+    // VISUALISASI GRAFIK PENJUALAN (CHART.JS)
+    function renderAnalyticsCharts() {
+      if (typeof Chart === 'undefined') return;
+
+      // 1. Chart Revenue per Bulan
+      const monthlyRev = {};
+      allOrders.forEach(o => {
+        if (o.status === 'Selesai' && o.createdAt && o.createdAt.toDate) {
+          const d = o.createdAt.toDate();
+          const label = d.toLocaleString('id-ID', { month: 'short', year: 'numeric' });
+          monthlyRev[label] = (monthlyRev[label] || 0) + (o.totalPrice || 0);
+        }
+      });
+
+      const revLabels = Object.keys(monthlyRev);
+      const revData = Object.values(monthlyRev);
+
+      const ctxRev = document.getElementById('revenueChart')?.getContext('2d');
+      if (ctxRev) {
+        if (chartRevenueInstance) chartRevenueInstance.destroy();
+        chartRevenueInstance = new Chart(ctxRev, {
+          type: 'line',
+          data: {
+            labels: revLabels.length ? revLabels : ['Belum Ada Data'],
+            datasets: [{
+              label: 'Pendapatan (Rp)',
+              data: revData.length ? revData : [0],
+              borderColor: '#105948',
+              backgroundColor: 'rgba(16, 89, 72, 0.1)',
+              fill: true,
+              tension: 0.3
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+
+      // 2. Chart Top Seller Variant
+      const variantSales = {};
+      allOrders.forEach(o => {
+        if (o.status === 'Selesai' && o.items) {
+          o.items.forEach(item => {
+            variantSales[item.name] = (variantSales[item.name] || 0) + item.qty;
+          });
+        }
+      });
+
+      const topLabels = Object.keys(variantSales);
+      const topData = Object.values(variantSales);
+
+      const ctxTop = document.getElementById('topSellerChart')?.getContext('2d');
+      if (ctxTop) {
+        if (chartTopSellerInstance) chartTopSellerInstance.destroy();
+        chartTopSellerInstance = new Chart(ctxTop, {
+          type: 'doughnut',
+          data: {
+            labels: topLabels.length ? topLabels : ['Belum Ada Data'],
+            datasets: [{
+              data: topData.length ? topData : [1],
+              backgroundColor: ['#d97706', '#105948', '#2563eb', '#10b981', '#ec4899', '#8b5cf6']
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
     }
 
     function openPrintModal(docId) {
@@ -580,6 +747,17 @@
       document.getElementById('printReceiptModal').classList.add('hidden');
     }
 
+    // DOWLOAD NOTA DALAM BENTUK GAMBAR (JPG)
+    function downloadReceiptAsJPG() {
+      const area = document.getElementById('printableReceiptArea');
+      html2canvas(area, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Struk_MyGabin_${Date.now()}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+      });
+    }
+
     function openProofModal(docId) {
       const order = allOrders.find(o => o.docId === docId);
       if (!order || !order.payProof) return;
@@ -598,10 +776,11 @@
       allProducts.forEach(p => {
         grid.innerHTML += `
           <div class="bg-white border rounded-2xl p-4 shadow flex flex-col justify-between space-y-3">
-            <div class="flex items-center gap-3">
+            <div class="flex items-start gap-3">
               <img src="${p.img}" class="w-20 h-20 object-cover rounded-xl border">
               <div class="flex-1 space-y-1">
                 <div class="font-bold text-base text-gray-800">${p.name}</div>
+                <div class="text-xs text-gray-500 line-clamp-2">${p.desc || 'Tidak ada deskripsi'}</div>
                 <div class="text-sm font-black text-brand-darkgreen">Rp ${(p.price || 0).toLocaleString('id-ID')}</div>
                 ${p.badge ? `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${p.badge}</span>` : ''}
               </div>
@@ -630,7 +809,7 @@
       });
     }
 
-    // FUNGSI KOMPRESI GAMBAR AGAR UKURAN FILE KECIL DAN FIRESTORE TIDAK MEMBATALKAN SIMPAN
+    // FUNGSI KOMPRESI GAMBAR
     function compressAndResizeImage(file, maxWidth = 600, quality = 0.7) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -654,7 +833,6 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Output JPEG dengan kompresi mutu 0.7 (ukuran jadi super ringan 30-80 KB)
             const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
             resolve(compressedBase64);
           };
@@ -664,7 +842,6 @@
       });
     }
 
-    // MEMBACA DARI GALERI DENGAN KOMPRESI OTOMATIS
     async function previewSelectedImage(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -680,7 +857,6 @@
       }
     }
 
-    // MEMBACA DARI INPUT URL
     function previewUrlImage() {
       const url = document.getElementById('prodImageUrl').value.trim();
       if (url) {
@@ -694,6 +870,7 @@
       document.getElementById('prodEditId').value = '';
       document.getElementById('modalProductTitle').innerText = 'Tambah Produk Baru';
       document.getElementById('prodName').value = '';
+      document.getElementById('prodDesc').value = '';
       document.getElementById('prodPrice').value = '';
       document.getElementById('prodStock').value = '';
       document.getElementById('prodBadge').value = '';
@@ -711,6 +888,7 @@
       document.getElementById('prodEditId').value = p.id;
       document.getElementById('modalProductTitle').innerText = 'Edit Produk';
       document.getElementById('prodName').value = p.name;
+      document.getElementById('prodDesc').value = p.desc || '';
       document.getElementById('prodPrice').value = p.price;
       document.getElementById('prodStock').value = p.stock;
       document.getElementById('prodBadge').value = p.badge || '';
@@ -743,6 +921,7 @@
 
       const editId = document.getElementById('prodEditId').value;
       const name = document.getElementById('prodName').value;
+      const desc = document.getElementById('prodDesc').value;
       const price = parseInt(document.getElementById('prodPrice').value) || 0;
       const stock = parseInt(document.getElementById('prodStock').value) || 0;
       const badge = document.getElementById('prodBadge').value;
@@ -757,7 +936,7 @@
         return;
       }
 
-      const prodData = { name, price, stock, badge, img: finalImg };
+      const prodData = { name, desc, price, stock, badge, img: finalImg };
 
       try {
         if (editId) {

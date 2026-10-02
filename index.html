@@ -12,7 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
-  <!-- HTML2Canvas Library -->
+  <!-- HTML2Canvas Library for JPG Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
@@ -27,12 +27,6 @@
     }
   </script>
   <style>
-    @media print {
-      body * { visibility: hidden; }
-      #invoiceArea, #invoiceArea * { visibility: visible; }
-      #invoiceArea { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
-    }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -52,7 +46,7 @@
 
   <!-- TOP BANNER -->
   <div class="bg-brand-darkgreen text-white text-xs md:text-sm py-2 px-6 text-center font-medium flex justify-between items-center">
-    <div class="hidden md:block text-amber-300"><i class="fa-solid fa-fire mr-1"></i> Pre-Order: Minggu - Selasa | Ready: Rabu 19.00 WIB</div>
+    <div class="hidden md:block text-amber-300"><i class="fa-solid fa-fire mr-1"></i> Pre-Order Hari Ini | Delivery Setiap Rabu 19.00 WIB</div>
     <div class="mx-auto md:mx-0 flex items-center gap-2">
       <span class="bg-amber-500 text-xs px-2 py-0.5 rounded font-bold text-gray-900">INFO PENTING</span>
       <span>Delivery Setiap Hari Rabu Jam 19.00 WIB • <strong>GRATIS ONGKIR!</strong></span>
@@ -103,17 +97,44 @@
   </header>
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
-    <!-- BANNER HERO -->
-    <div class="bg-gradient-to-r from-emerald-900 to-brand-green rounded-2xl p-6 md:p-8 text-white shadow-xl mb-8 border border-emerald-700">
-      <div class="max-w-2xl">
+    <!-- BANNER HERO & COUNTDOWN TIMER PO -->
+    <div class="bg-gradient-to-r from-emerald-900 to-brand-green rounded-2xl p-6 md:p-8 text-white shadow-xl mb-8 border border-emerald-700 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+      <div class="md:col-span-2">
         <div class="inline-flex items-center gap-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold mb-3">
           <i class="fa-solid fa-location-dot"></i> Produk Asli Bangkalan, Madura
         </div>
         <h1 class="text-2xl md:text-4xl font-extrabold mb-2 leading-tight">Gabin Ice Cream - Camilan Renyah, Manis & Dingin Segar!</h1>
-        <p class="text-emerald-100 text-sm md:text-base mb-6">Nikmati kelezatan unik gabin ice cream khas Bangkalan, Madura.</p>
+        <p class="text-emerald-100 text-sm md:text-base mb-4">Nikmati kelezatan unik gabin ice cream khas Bangkalan, Madura.</p>
         <a href="#menu-section" class="inline-block bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold px-5 py-2.5 rounded-xl shadow-lg transition text-sm">
           <i class="fa-solid fa-utensils"></i> Pilih Menu Sekarang
         </a>
+      </div>
+
+      <!-- TIMER PO INTERAKTIF (FOMO) -->
+      <div class="bg-brand-darkgreen/80 backdrop-blur-sm p-4 rounded-2xl border border-amber-400/40 text-center space-y-2">
+        <div class="text-amber-300 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-clock animate-pulse"></i> Batas Waktu Close PO & Delivery
+        </div>
+        <div class="text-[11px] text-emerald-200">Pengiriman Berikutnya: <span class="font-bold text-white">Rabu, 19.00 WIB</span></div>
+        <div class="grid grid-cols-4 gap-2 pt-1">
+          <div class="bg-black/40 p-2 rounded-xl border border-emerald-600">
+            <span id="cdDays" class="block font-black text-xl text-amber-400">00</span>
+            <span class="text-[9px] text-gray-300 uppercase">Hari</span>
+          </div>
+          <div class="bg-black/40 p-2 rounded-xl border border-emerald-600">
+            <span id="cdHours" class="block font-black text-xl text-amber-400">00</span>
+            <span class="text-[9px] text-gray-300 uppercase">Jam</span>
+          </div>
+          <div class="bg-black/40 p-2 rounded-xl border border-emerald-600">
+            <span id="cdMins" class="block font-black text-xl text-amber-400">00</span>
+            <span class="text-[9px] text-gray-300 uppercase">Menit</span>
+          </div>
+          <div class="bg-black/40 p-2 rounded-xl border border-emerald-600">
+            <span id="cdSecs" class="block font-black text-xl text-amber-400">00</span>
+            <span class="text-[9px] text-gray-300 uppercase">Detik</span>
+          </div>
+        </div>
+        <div class="text-[10px] text-amber-300/80 italic pt-1">Pesan sebelum countdown habis agar dikirim minggu ini!</div>
       </div>
     </div>
 
@@ -132,6 +153,27 @@
       <div id="productGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
     </section>
   </main>
+
+  <!-- MODAL DETAIL DESKRIPSI PRODUK -->
+  <div id="productDetailModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border space-y-4 p-6">
+      <div class="relative h-56 -mx-6 -mt-6 bg-gray-100">
+        <img id="detailImg" src="" class="w-full h-full object-cover">
+        <button onclick="closeProductDetailModal()" class="absolute top-4 right-4 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center">&times;</button>
+      </div>
+      <div>
+        <div id="detailBadge" class="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-1"></div>
+        <h3 id="detailName" class="font-black text-xl text-brand-darkgreen"></h3>
+        <div id="detailPrice" class="text-lg font-black text-amber-600 my-1"></div>
+        <p id="detailDesc" class="text-xs text-gray-600 leading-relaxed mt-2"></p>
+      </div>
+      <div class="pt-2">
+        <button id="btnDetailAddToCart" class="w-full bg-brand-green hover:bg-brand-darkgreen text-white font-bold py-3 rounded-xl shadow text-sm">
+          + Tambah Ke Keranjang
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- DRAWER KERANJANG -->
   <div id="cartDrawer" class="fixed inset-0 z-50 transform translate-x-full transition-transform duration-300">
@@ -155,7 +197,7 @@
     </div>
   </div>
 
-  <!-- MODAL AKUN / LOGIN / REGISTRASI / PROFIL PEMBELI -->
+  <!-- MODAL AKUN / LOGIN / REGISTRASI -->
   <div id="userModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border p-6 space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
@@ -337,7 +379,7 @@
     </div>
   </div>
 
-  <!-- MODAL SUKSES & NOTA/INVOICE -->
+  <!-- MODAL SUKSES & NOTA/INVOICE (GAMBAR JPG) -->
   <div id="successModal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl my-8">
       <div class="w-16 h-16 bg-emerald-100 text-brand-green rounded-full flex items-center justify-center text-3xl mx-auto"><i class="fa-solid fa-circle-check"></i></div>
@@ -362,12 +404,12 @@
         </div>
       </div>
 
-      <div class="space-y-2 pt-2 no-print">
+      <div class="space-y-2 pt-2">
         <button id="btnSendWA" onclick="sendOrderToWA()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
           <i class="fa-brands fa-whatsapp text-lg"></i> Kirim Chat ke Penjual
         </button>
-        <button onclick="window.print()" class="w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
-          <i class="fa-solid fa-print"></i> Cetak / Simpan Nota
+        <button onclick="downloadInvoiceJPG()" class="w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+          <i class="fa-solid fa-download"></i> Simpan Gambar Nota (JPG)
         </button>
         <button onclick="location.reload()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 rounded-xl text-xs">
           Selesai & Kembali
@@ -393,13 +435,13 @@
     const auth = firebase.auth();
 
     const defaultProducts = [
-      { id: "1", name: 'Coklat Cips', price: 12000, stock: 25, rating: '4.8', img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=500&q=80', badge: 'Terlaris' },
-      { id: "2", name: 'Strobery', price: 14000, stock: 20, rating: '4.9', img: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80', badge: 'Terlaris' },
-      { id: "3", name: 'Vanila Blubery', price: 12000, stock: 18, rating: '4.7', img: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?auto=format&fit=crop&w=500&q=80', badge: '' },
-      { id: "4", name: 'Cokkis and Cream', price: 13000, stock: 15, rating: '4.8', img: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=500&q=80', badge: '' },
-      { id: "5", name: 'Macha Oreo', price: 14000, stock: 12, rating: '4.8', img: 'https://images.unsplash.com/photo-1505394033641-40c6ad1178d7?auto=format&fit=crop&w=500&q=80', badge: 'Baru' },
-      { id: "6", name: 'Paket A (Mix 3)', price: 35000, stock: 10, rating: '5.0', img: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=500&q=80', badge: 'Hemat' },
-      { id: "7", name: 'Paket B (Isi 5 All Varian)', price: 60000, stock: 8, rating: '5.0', img: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?auto=format&fit=crop&w=500&q=80', badge: 'Hemat' }
+      { id: "1", name: 'Coklat Cips', desc: 'Renyahnya roti gabin berpadu dengan ice cream cokelat manis bertabur choco chips gurih.', price: 12000, stock: 25, rating: '4.8', img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=500&q=80', badge: 'Terlaris' },
+      { id: "2", name: 'Strobery', desc: 'Sajian manis asam segar dari rasa stroberi alami yang memanjakan lidah.', price: 14000, stock: 20, rating: '4.9', img: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80', badge: 'Terlaris' },
+      { id: "3", name: 'Vanila Blubery', desc: 'Kombinasi krim vanila lembut dengan selai blueberry manis yang melimpah.', price: 12000, stock: 18, rating: '4.7', img: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?auto=format&fit=crop&w=500&q=80', badge: '' },
+      { id: "4", name: 'Cokkis and Cream', desc: 'Perpaduan renyah remahan biskuit cokelat dan lembutnya olahan susu premium.', price: 13000, stock: 15, rating: '4.8', img: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=500&q=80', badge: '' },
+      { id: "5", name: 'Macha Oreo', desc: 'Kombinasi harumnya bubuk matcha khas Jepang dengan toping oreo renyah.', price: 14000, stock: 12, rating: '4.8', img: 'https://images.unsplash.com/photo-1505394033641-40c6ad1178d7?auto=format&fit=crop&w=500&q=80', badge: 'Baru' },
+      { id: "6", name: 'Paket A (Mix 3)', desc: 'Paket spesial hemat Mix 3 Rasa favorit: Coklat Cips, Vanila Blubery, dan Cokkis and Cream. (Varian dikunci/tidak dapat diganti)', price: 35000, stock: 10, rating: '5.0', img: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=500&q=80', badge: 'Hemat' },
+      { id: "7", name: 'Paket B (Isi 5 All Varian)', desc: 'Paket lengkap hemat isi 5 varian lengkap rasa My Gabin.', price: 60000, stock: 8, rating: '5.0', img: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?auto=format&fit=crop&w=500&q=80', badge: 'Hemat' }
     ];
 
     let products = [];
@@ -407,52 +449,67 @@
     let payProofBase64 = '';
     let selectedCategory = 'ALL';
     let currentOrderCode = '';
-    let audioCtx = null;
+    let isStoreOpen = true;
 
     // USER DATA
     let currentUser = null;
     let userProfileData = null;
     let wishlist = [];
-    let activeOrdersListener = null;
 
-    // AUDIO UNLOCK FOR REAL-TIME SOUND PERMANENT
-    function unlockAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.resume();
-      }
-    }
-    document.addEventListener('click', unlockAudio, { once: false });
-    document.addEventListener('touchstart', unlockAudio, { once: false });
+    // COUNTDOWN TIMER INTERAKTIF PO (Jadwal Kirim Setiap Rabu Jam 19:00 WIB)
+    function startPOCountdown() {
+      function updateTimer() {
+        const now = new Date();
+        let target = new Date();
+        
+        // Target: Hari Rabu jam 19.00 WIB
+        const dayOfWeek = now.getDay(); // 0: Mingu, 3: Rabu
+        let daysUntilWednesday = (3 - dayOfWeek + 7) % 7;
+        
+        if (daysUntilWednesday === 0 && now.getHours() >= 19) {
+          daysUntilWednesday = 7;
+        }
 
-    // WEB NOTIFICATION API PERMISSION
-    function requestNotificationPermission() {
-      if ('Notification' in window) {
-        Notification.requestPermission().then(permission => {
-          if (permission === 'granted') {
-            showWebNotification('Notifikasi Aktif', 'Anda akan menerima pembaruan status pesanan secara permanen!');
-          } else {
-            alert('Izin notifikasi ditolak.');
-          }
-        });
-      } else {
-        alert('Browser Anda tidak mendukung Web Notification API.');
+        target.setDate(now.getDate() + daysUntilWednesday);
+        target.setHours(19, 0, 0, 0);
+
+        const diff = target - now;
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+        document.getElementById('cdDays').innerText = String(days).padStart(2, '0');
+        document.getElementById('cdHours').innerText = String(hours).padStart(2, '0');
+        document.getElementById('cdMins').innerText = String(mins).padStart(2, '0');
+        document.getElementById('cdSecs').innerText = String(secs).padStart(2, '0');
       }
+
+      updateTimer();
+      setInterval(updateTimer, 1000);
     }
 
-    function showWebNotification(title, body) {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, {
-          body: body,
-          icon: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=100&q=80'
-        });
+    // MONITOR STATUS STORE LIVE
+    db.collection('settings').doc('storeStatus').onSnapshot(doc => {
+      if (doc.exists) {
+        isStoreOpen = doc.data().isOpen;
+        const btnCheckout = document.getElementById('btnToCheckout');
+        if (!isStoreOpen) {
+          btnCheckout.disabled = true;
+          btnCheckout.innerText = "Toko Sedang Tutup / Stok Habis";
+          btnCheckout.className = "w-full bg-gray-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
+        } else {
+          btnCheckout.disabled = false;
+          btnCheckout.innerText = "Lanjut Pemesanan";
+          btnCheckout.className = "w-full bg-amber-500 hover:bg-amber-400 text-brand-darkgreen font-bold py-3 rounded-xl shadow";
+        }
       }
-    }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      startPOCountdown();
+    });
 
     // AUTH STATE
     auth.onAuthStateChanged(async (user) => {
@@ -462,13 +519,11 @@
         authBtnText.innerText = "Profil Saya";
         await fetchUserProfile(user.uid);
         listenUserWishlist(user.uid);
-        listenUserOrderStatus(user.uid);
       } else {
         authBtnText.innerText = "Masuk / Akun";
         userProfileData = null;
         wishlist = [];
         updateWishlistCount();
-        if (activeOrdersListener) activeOrdersListener();
       }
       renderProductsUI();
     });
@@ -491,28 +546,6 @@
 
     function updateWishlistCount() {
       document.getElementById('wishlistCount').innerText = wishlist.length;
-    }
-
-    // REAL-TIME ORDER STATUS MONITORING WITH SOUND & WEB PUSH NOTIFICATION
-    function listenUserOrderStatus(uid) {
-      if (activeOrdersListener) activeOrdersListener();
-      let isFirstLoad = true;
-
-      activeOrdersListener = db.collection('orders').where('userId', '==', uid).onSnapshot(snap => {
-        snap.docChanges().forEach(change => {
-          if (change.type === 'modified' && !isFirstLoad) {
-            const data = change.doc.data();
-            const text = `Halo ${data.custName}, status pesanan ${data.id} Anda telah diperbarui menjadi ${data.status}`;
-            
-            // WEBSPEECH REALTIME VOICE
-            speakCheckoutSuccess(text);
-            
-            // WEB NOTIFICATION API
-            showWebNotification(`Status Pesanan: ${data.status}`, `Pesanan ${data.id} sekarang berstatus "${data.status}".`);
-          }
-        });
-        isFirstLoad = false;
-      });
     }
 
     db.collection('products').onSnapshot(snapshot => {
@@ -564,27 +597,58 @@
         grid.innerHTML += `
           <div class="bg-white rounded-2xl border shadow hover:shadow-xl transition overflow-hidden flex flex-col justify-between relative">
             <div>
-              <div class="relative aspect-square overflow-hidden bg-gray-100">
+              <div class="relative aspect-square overflow-hidden bg-gray-100 cursor-pointer" onclick="openProductDetailModal('${p.id}')">
                 <img src="${p.img}" class="w-full h-full object-cover">
                 ${p.badge ? `<span class="absolute top-2 left-2 bg-amber-500 text-brand-darkgreen font-black text-[10px] px-2 py-0.5 rounded-full">${p.badge}</span>` : ''}
-                <button onclick="toggleWishlist('${p.id}')" class="absolute top-2 right-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-full text-xs transition shadow hover:bg-white">
+                <button onclick="event.stopPropagation(); toggleWishlist('${p.id}')" class="absolute top-2 right-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-full text-xs transition shadow hover:bg-white">
                   <i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-gray-600'} fa-heart"></i>
                 </button>
                 <span class="absolute bottom-2 right-2 bg-black/60 text-white text-xs font-bold px-2 py-0.5 rounded-lg">Stok: ${p.stock}</span>
               </div>
-              <div class="p-4">
+              <div class="p-4 cursor-pointer" onclick="openProductDetailModal('${p.id}')">
                 <h3 class="font-bold text-gray-800 text-sm md:text-base">${p.name}</h3>
                 <div class="text-brand-darkgreen font-black text-lg">Rp ${(p.price || 0).toLocaleString('id-ID')}</div>
               </div>
             </div>
             <div class="p-4 pt-0">
-              <button onclick="addToCart('${p.id}')" ${isOutOfStock ? 'disabled' : ''} class="w-full ${isOutOfStock ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-brand-green text-white hover:bg-brand-darkgreen'} font-bold py-2 rounded-xl text-xs md:text-sm transition">
-                ${isOutOfStock ? 'Stok Habis' : 'Tambah Ke Keranjang'}
+              <button onclick="addToCart('${p.id}')" ${isOutOfStock || !isStoreOpen ? 'disabled' : ''} class="w-full ${isOutOfStock || !isStoreOpen ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-brand-green text-white hover:bg-brand-darkgreen'} font-bold py-2 rounded-xl text-xs md:text-sm transition">
+                ${!isStoreOpen ? 'Toko Tutup' : (isOutOfStock ? 'Stok Habis' : 'Tambah Ke Keranjang')}
               </button>
             </div>
           </div>
         `;
       });
+    }
+
+    // MODAL DETAIL DESKRIPSI PRODUK LENGKAP
+    function openProductDetailModal(id) {
+      const p = products.find(prod => prod.id === id);
+      if (!p) return;
+
+      document.getElementById('detailImg').src = p.img;
+      document.getElementById('detailName').innerText = p.name;
+      document.getElementById('detailPrice').innerText = `Rp ${(p.price || 0).toLocaleString('id-ID')}`;
+      document.getElementById('detailDesc').innerText = p.desc || 'Varian lezat My Gabin Ice Cream asli Bangkalan Madura.';
+      
+      const badgeElem = document.getElementById('detailBadge');
+      if (p.badge) {
+        badgeElem.innerText = p.badge;
+        badgeElem.classList.remove('hidden');
+      } else {
+        badgeElem.classList.add('hidden');
+      }
+
+      const btn = document.getElementById('btnDetailAddToCart');
+      btn.onclick = () => {
+        addToCart(p.id);
+        closeProductDetailModal();
+      };
+
+      document.getElementById('productDetailModal').classList.remove('hidden');
+    }
+
+    function closeProductDetailModal() {
+      document.getElementById('productDetailModal').classList.add('hidden');
     }
 
     async function toggleWishlist(productId) {
@@ -618,7 +682,8 @@
 
     function addToCart(id) {
       const p = products.find(prod => prod.id === id);
-      if (!p || p.stock <= 0) return;
+      if (!p || p.stock <= 0 || !isStoreOpen) return;
+
       const item = cart.find(c => c.id === id);
       if (item) {
         if (item.qty < p.stock) {
@@ -686,6 +751,7 @@
     
     function openCheckoutModal() { 
       if(cart.length === 0) return alert('Keranjang belanjaan Anda masih kosong!');
+      if(!isStoreOpen) return alert('Maaf, toko sedang tutup!');
       toggleCartDrawer(); 
       
       if (currentUser && userProfileData) {
@@ -1004,18 +1070,6 @@
       reader.readAsDataURL(file);
     }
 
-    // FUNGSI SUARA OTOMATIS REAL-TIME PEMBELI
-    function speakCheckoutSuccess(textMessage) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(textMessage);
-        utterance.lang = 'id-ID';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      }
-    }
-
-    // KIRIM CHAT OTOMATIS KE WHATSAPP PENJUAL
     function sendOrderToWA() {
       const sellerWA = "6285936618342";
       const message = `Halo My Gabin, pesanan dengan ${currentOrderCode} tolong diproses ya 😉✨`;
@@ -1023,6 +1077,18 @@
       window.open(waUrl, '_blank');
     }
 
+    // SIMPAN / UNDUH NOTA STRUK SEBAGAI GAMBAR (JPG)
+    function downloadInvoiceJPG() {
+      const area = document.getElementById('invoiceArea');
+      html2canvas(area, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Nota_MyGabin_${currentOrderCode}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+      });
+    }
+
+    // HANDLER CHECKOUT DAN PENGURANGAN STOK OTOMATIS (PAKET A, PAKET B, DAN SATUAN)
     async function handleCheckoutSubmit(e) {
       e.preventDefault();
       const method = document.getElementById('payMethod').value;
@@ -1068,40 +1134,59 @@
           });
         }
 
+        // AKSI PENGURANGAN STOK OTOMATIS
         for (let item of cart) {
           const prod = products.find(p => p.id === item.id);
           if (prod) {
+            // 1. Kurangi stok item itu sendiri
             const newStock = Math.max(0, prod.stock - item.qty);
-            await db.collection('products').doc(item.id).update({ stock: newStock });
+            await db.collection('products').doc(prod.id).update({ stock: newStock });
+
+            // 2. Jika membeli PAKET A (Mix 3: Choco Chips, Vanilla Blueberry, Cookies & Cream)
+            if (prod.name.toLowerCase().includes('paket a')) {
+              const targetNames = ['coklat cips', 'vanila blubery', 'cokkis and cream'];
+              products.forEach(async p => {
+                const isMatch = targetNames.some(t => p.name.toLowerCase().includes(t));
+                if (isMatch) {
+                  const s = Math.max(0, p.stock - item.qty);
+                  await db.collection('products').doc(p.id).update({ stock: s });
+                }
+              });
+            }
+
+            // 3. Jika membeli PAKET B (Isi 5 All Varian Satuan)
+            if (prod.name.toLowerCase().includes('paket b')) {
+              products.forEach(async p => {
+                if (!p.name.toLowerCase().includes('paket')) {
+                  const s = Math.max(0, p.stock - item.qty);
+                  await db.collection('products').doc(p.id).update({ stock: s });
+                }
+              });
+            }
           }
         }
 
-        closeCheckoutModal();
-        
-        // POPULATE INVOICE
+        // TAMPILKAN INVOICE
         document.getElementById('createdOrderId').innerText = newId;
         document.getElementById('invoiceCustName').innerText = custName;
         document.getElementById('invoiceDate').innerText = dateStr;
         document.getElementById('invoicePayMethod').innerText = method;
+
+        let itemsHtml = '';
+        cart.forEach(i => {
+          itemsHtml += `<div class="flex justify-between"><span>${i.name} x${i.qty}</span><span>Rp ${(i.price * i.qty).toLocaleString('id-ID')}</span></div>`;
+        });
+        document.getElementById('invoiceItems').innerHTML = itemsHtml;
         document.getElementById('invoiceTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
 
-        let invoiceItemsHtml = '';
-        cart.forEach(item => {
-          invoiceItemsHtml += `<div class="flex justify-between"><span>${item.name} x${item.qty}</span><span>Rp ${(item.price * item.qty).toLocaleString('id-ID')}</span></div>`;
-        });
-        document.getElementById('invoiceItems').innerHTML = invoiceItemsHtml;
-
+        closeCheckoutModal();
         document.getElementById('successModal').classList.remove('hidden');
-
-        // WEB PUSH NOTIFICATION & SOUND REALTIME
-        showWebNotification('Pesanan Berhasil!', `Kode: ${newId} - Terima kasih telah memesan My Gabin.`);
-        speakCheckoutSuccess(`HALO ${custName} TERIMAKASIH SUDAH CHECK OUT`);
-
         cart = [];
         updateCartUI();
 
-      } catch (error) {
-        alert('Terjadi kesalahan saat membuat pesanan: ' + error.message);
+      } catch (err) {
+        alert('Gagal menyimpan pesanan: ' + err.message);
+      } finally {
         document.getElementById('btnSubmitOrder').disabled = false;
       }
     }
