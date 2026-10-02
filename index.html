@@ -456,6 +456,20 @@
     let userProfileData = null;
     let wishlist = [];
 
+    // FUNGSI SUARA OTOMATIS SAAT CHECKOUT BERHASIL
+    function playCheckoutVoice(customerName) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Batalkan suara lain yang sedang berjalan
+        const text = `Selamat tuan ${customerName} telah berhasil check out`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
     // COUNTDOWN TIMER INTERAKTIF PO (Jadwal Kirim Setiap Rabu Jam 19:00 WIB)
     function startPOCountdown() {
       function updateTimer() {
@@ -1181,6 +1195,10 @@
 
         closeCheckoutModal();
         document.getElementById('successModal').classList.remove('hidden');
+
+        // PEMANGGILAN SUARA OTOMATIS SAAT PEMBELI BERHASIL CHECKOUT
+        playCheckoutVoice(custName);
+
         cart = [];
         updateCartUI();
 
